@@ -74,13 +74,20 @@ impl CPU {
             Instruction::Add(target) => {
                 match target{
                     ArithmeticTarget::A{
-
+                        let value = self.registers.a;
+                        let new_value = self.add(value);
+                        self.registers.a = new_value;
                     }
                 _ => {}
                 }
             }
             _ => {}
         }
+    }
+
+    fn add(&mut self,value: u8) -> u8{
+        let(new_value, is_overflow) = self.registers.a.overflowing_add(valuw);
+        new_value
     }
 }
 
