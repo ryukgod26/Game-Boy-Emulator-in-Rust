@@ -21,6 +21,14 @@ struct Registers{
     h: u8,
 }
 
+enum Instruction{
+    Add(ArithmeticTarget),
+}
+
+enum ArithmeticTarget{
+    A,B,C,D,E,H,L,
+}
+
 impl Registers{
     fn get_bc(&self) -> u16{
         (self.b as u16) << 8 | (self.c as u16)
@@ -57,6 +65,22 @@ impl std::convert::From<u8> for FlagsRegister{
             carry
         }
 
+    }
+}
+
+impl CPU {
+    fn execute(&mut self,instruction: Instruction){
+        match instruction{
+            Instruction::Add(target) => {
+                match target{
+                    ArithmeticTarget::A{
+
+                    }
+                _ => {}
+                }
+            }
+            _ => {}
+        }
     }
 }
 
