@@ -21,6 +21,16 @@ struct Registers{
     h: u8,
 }
 
+struct CPU{
+    registers: Registers,
+    pc: u16,
+    bus: MemoryBus,
+}
+
+struct MemoryBus{
+    memory: [u8; 0xFFFF]
+}
+
 enum Instruction{
     Add(ArithmeticTarget),
 }
@@ -87,7 +97,17 @@ impl CPU {
 
     fn add(&mut self,value: u8) -> u8{
         let(new_value, is_overflow) = self.registers.a.overflowing_add(valuw);
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registersf.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
+        self.registers.f.carry = did_overflow;
         new_value
+    }
+}
+
+impl MemoryBus{
+    fn read_byte(&self,address: u16) ->u8{
+        self.memory[address as usize]
     }
 }
 
