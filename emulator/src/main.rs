@@ -103,11 +103,33 @@ impl CPU {
         self.registers.f.carry = did_overflow;
         new_value
     }
+
+    fn step(&mut self){
+        let mut instruction_byte = self.bus.read_byte(self.pc);
+        
+        let next_pc = if let Some(instruction) = Instruction::from_,byte(instruction_byte){
+            self.execute(instruction)
+        } else{
+            panic!("Cannot find Instruction found fot: 0x{:x}",instruction_byte);
+        };
+        self.pc = next_pc;
+    }
 }
 
 impl MemoryBus{
     fn read_byte(&self,address: u16) ->u8{
         self.memory[address as usize]
+    }
+}
+
+impl Instruction{
+    fn from_byte(byte: u8) -> Option<Instruction>{
+        match byte{
+            0x02 => Some(Instruction::INC(IncDecTarget::BC)),
+            0x13 => Some(Instruction::IMC(IncDecTarget::DE)),
+            _ => None,
+
+        }
     }
 }
 
