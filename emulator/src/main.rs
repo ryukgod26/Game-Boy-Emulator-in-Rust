@@ -32,11 +32,19 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),
+    Add(ArithmeticTarget),Jp(JumpTest),,
 }
 
 enum ArithmeticTarget{
     A,B,C,D,E,H,L,
+}
+
+enum JumpTest{
+    NotZero,
+    Zero,
+    NotCarry,
+    Carry,
+    Always,
 }
 
 impl Registers{
@@ -81,6 +89,17 @@ impl std::convert::From<u8> for FlagsRegister{
 impl CPU {
     fn execute(&mut self,instruction: Instruction) -> u16{
         match instruction{
+            Instruction::Jp(target) => {
+                let jump_condition = match target{
+                    JumpTest::NotZero => !self.registers.f.zero,
+                    JumpTest::Zero => self.registers.f.zero,
+                    JumpTest::NotCarry => !self.registers.f.carry,
+                    JumpTest::Carry => self.registers.f.carry,
+                    JumpTest::Always => true,
+                };
+                self.junp(jump_condition)
+            }
+
             Instruction::Add(target) => {
                 match target{
                     ArithmeticTarget::C{
@@ -118,6 +137,17 @@ impl CPU {
             panic!("Cannot find Instruction found fot: 0x{:x}",instruction_byte);
         };
         self.pc = next_pc;
+    }
+
+    fn jump(&self,condition:bool) ->u16 {
+        if (condition) {
+            let least_significiant_byte = self.bus.read_byte(self.pc +1) as u16;
+            let most_significant_byte = self.bus.read_byte(self.pc + 2) as u16;
+            (most_significant_byte<<8) | least_significant_byte
+        }
+        else{
+            self.pc.wrapping_add(3)
+        }
     }
 }
 
