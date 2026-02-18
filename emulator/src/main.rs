@@ -79,14 +79,15 @@ impl std::convert::From<u8> for FlagsRegister{
 }
 
 impl CPU {
-    fn execute(&mut self,instruction: Instruction){
+    fn execute(&mut self,instruction: Instruction) -> u16{
         match instruction{
             Instruction::Add(target) => {
                 match target{
-                    ArithmeticTarget::A{
-                        let value = self.registers.a;
+                    ArithmeticTarget::C{
+                        let value = self.registers.c;
                         let new_value = self.add(value);
                         self.registers.a = new_value;
+                        self.pc.wrapping_add(1)
                     }
                 _ => {}
                 }
@@ -106,10 +107,14 @@ impl CPU {
 
     fn step(&mut self){
         let mut instruction_byte = self.bus.read_byte(self.pc);
-        
-        let next_pc = if let Some(instruction) = Instruction::from_,byte(instruction_byte){
+        let prefixed = instruction_byte == 0xCB;
+        if prefixed{
+            instruction_byte = self.bus.read_byte(self.pc + 1);
+        }
+        let next_pc = if let Some(instruction) = Instruction::from_,byte(instruction_byte,prefixed){
             self.execute(instruction)
         } else{
+            let description = format!("0x{}{}");
             panic!("Cannot find Instruction found fot: 0x{:x}",instruction_byte);
         };
         self.pc = next_pc;
@@ -123,12 +128,29 @@ impl MemoryBus{
 }
 
 impl Instruction{
-    fn from_byte(byte: u8) -> Option<Instruction>{
-        match byte{
-            0x02 => Some(Instruction::INC(IncDecTarget::BC)),
-            0x13 => Some(Instruction::IMC(IncDecTarget::DE)),
-            _ => None,
+    fn from_byte(byte: u8,prefized: bool) -> Option<Instruction>{
+        if prefixed{
+            from_prefixed_byte(byte)
+        }
+        else{    
+            from_not_prefixed_byte(byte)
+        }
+    }
 
+    fn from_prefixed_byte(byte: u8)->Option<Instruction>{
+        match byte{
+            0x00 => Some(Instruction::RLC(PrefixTarget:B)),
+            _ => None,
+        }
+    }
+
+    fn from_not_prefixed_byte(byte:u8) -> Option<Instruction>{
+        match byte{
+            0x06 => Some(Instructon::LD(LoadType::Byte(Target::B),LoadSource::NextByte)),
+            0x0E => Some(Instruction::LD(LoadType::Byte(Target::C),LoadSource::NextByte)),
+            0x02 => Some(Instruction::INC(IncDecTarget::BC)),
+            0x13 => Some(Instruction::INC(IncDecTarget::DE)),
+            _ => None,
         }
     }
 }
