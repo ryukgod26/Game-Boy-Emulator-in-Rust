@@ -17,7 +17,7 @@ struct Registers{
     d: u8,
     e: u8,
     f: u8,
-    g; u8,
+    g: u8,
     h: u8,
 }
 
@@ -32,7 +32,7 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),,
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),
 }
 
 enum ArithmeticTarget{
@@ -45,6 +45,18 @@ enum JumpTest{
     NotCarry,
     Carry,
     Always,
+}
+
+enum LoadByteTarget{
+    A,B,C,D,E,H,L,HLI
+}
+
+enum LoadByteSource{
+    A,B,C,D,E,H,L,DB,HLI
+}
+
+enum LoadType{
+    Byte(LoadByteTarget,LoadByteSourxe)
 }
 
 impl Registers{
@@ -98,7 +110,7 @@ impl CPU {
                     JumpTest::Always => true,
                 };
                 self.junp(jump_condition)
-            }
+            },
 
             Instruction::Add(target) => {
                 match target{
@@ -110,8 +122,30 @@ impl CPU {
                     }
                 _ => {}
                 }
+            },
+
+            Instruction::LD(Loadtype) => {
+                Loadtype::Byte(target,source) => {
+                    let source_val = match source {
+                        LoadByteSource::A => self.registers.a,
+                        LoadByteSource::D8 => self.read_next_byte(),
+                        LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
+                        _ => {panic!("Other Sources Not Implemented!!!")}
+                    };
+                    match target{
+                        LoadByteTarget::A => self.registers.a = source_val,
+                        LoadByteTarget::HLI => self.bus.write_byte(self.registers.get_hl(),source_val),
+                        _ => {panic!("Other Targets Not Implemented")}
+                    };
+                    match source{
+                        LoadByteSource::D8 => self.pc.wrapping_add(2),
+                        _ => self.pc.wrapping_add(1),
+                    }
+                }
+                _ => {panic!("Other Load Types not Implemented Yet")}
             }
-            _ => {}
+
+            _ => {panic!("Support for more Instructions not Added Yet.")}
         }
     }
 
