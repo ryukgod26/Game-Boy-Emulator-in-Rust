@@ -33,7 +33,7 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),POP(target),
 }
 
 enum ArithmeticTarget{
@@ -58,6 +58,10 @@ enum LoadByteSource{
 
 enum LoadType{
     Byte(LoadByteTarget,LoadByteSourxe)
+}
+
+enum StackTarget{
+    BC,HL
 }
 
 impl Registers{
@@ -145,6 +149,7 @@ impl CPU {
                 }
                 _ => {panic!("Other Load Types not Implemented Yet")}
             },
+
             Instruction::PUSH(target) => {
                 let value = match target{
                     StackTarget::BC => self.registers.get_bc(),
@@ -154,17 +159,38 @@ impl CPU {
                 self.pc.wrapping_add(1);
             },
 
+            Instruction::POP(target) => {
+                let result = self.pop();
+                match target{
+                    StackTarget::BC => {
+                        self.registers.set_bc(result)
+                    }
+                    _ => {panic!("Yet to Add Support for more Instruction in StackTarget")},
+                };
+                self.pc.wrapping_add(1)
+            }
+
             _ => {panic!("Support for more Instructions not Added Yet.")}
         }
     }
 
     fn push(&mut self,val: u16){
         self.sp = self.sp.wrapping_sub(1);
-        self.bus.write_byte(self.sp,((value & 0xFF00) >> 8) as u8);
+        self.bus.write_byte(self.sp, ((value &0xFF00) >>8) as u8);
 
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, (value & 0xFF) as u8);
         
+    }
+
+    fn pop(&mut self,val: u16) -> u16{
+        let lsb = self.bus.read_byte(self.sp) as u16;
+        self.sp = self.sp.wrapping_add(1);
+
+        let msb = self.bus.read_byte(self.sp) as u16;
+        self.sp = self.sp.wrapping_add(1);
+        
+        (msb << 8) | lsb
     }
 
     fn add(&mut self,value: u8) -> u8{
