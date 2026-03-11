@@ -24,6 +24,7 @@ struct Registers{
 struct CPU{
     registers: Registers,
     pc: u16,
+    sp: u16,
     bus: MemoryBus,
 }
 
@@ -32,7 +33,7 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),
 }
 
 enum ArithmeticTarget{
@@ -143,10 +144,27 @@ impl CPU {
                     }
                 }
                 _ => {panic!("Other Load Types not Implemented Yet")}
-            }
+            },
+            Instruction::PUSH(target) => {
+                let value = match target{
+                    StackTarget::BC => self.registers.get_bc(),
+                    _ => {panic!("Other Targets not Supported Yet!!!")}
+                };
+                self.push(value);
+                self.pc.wrapping_add(1);
+            },
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
         }
+    }
+
+    fn push(&mut self,val: u16){
+        self.sp = self.sp.wrapping_sub(1);
+        self.bus.write_byte(self.sp,((value & 0xFF00) >> 8) as u8);
+
+        self.sp = self.sp.wrapping_sub(1);
+        self.bus.write_byte(self.sp, (value & 0xFF) as u8);
+        
     }
 
     fn add(&mut self,value: u8) -> u8{
