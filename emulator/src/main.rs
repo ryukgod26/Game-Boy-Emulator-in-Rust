@@ -3,6 +3,8 @@ const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
 const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
 const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
+let is_halted: bool = false;
+
 struct FlagsRegister{
     zero: bool,
     subtract: bool,
@@ -33,7 +35,7 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),POP(target),CALL(function),RET(function),
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),POP(target),CALL(function),RET(function),NOP,Halt
 }
 
 enum ArithmeticTarget{
@@ -109,6 +111,9 @@ impl std::convert::From<u8> for FlagsRegister{
 
 impl CPU {
     fn execute(&mut self,instruction: Instruction) -> u16{
+        if is_halted{
+            return
+        }
         match instruction{
             Instruction::Jp(target) => {
                 let jump_condition = match target{
@@ -188,6 +193,14 @@ impl CPU {
                     _=>{panic!("Yet to add more Conditions")}
                 };
                 self.return_(jump_condition)
+            }
+
+            Inatruction::NOP => {
+                self.pc = self.pc + 1;
+            }
+
+            Instruction::Halt => {
+                is_halted = true;
             }
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
