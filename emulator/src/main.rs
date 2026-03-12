@@ -33,7 +33,7 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),POP(target),
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),POP(target),CALL(function),RET(function),
 }
 
 enum ArithmeticTarget{
@@ -62,6 +62,10 @@ enum LoadType{
 
 enum StackTarget{
     BC,HL
+}
+
+enum JumpTarget{
+    NotZero
 }
 
 impl Registers{
@@ -168,9 +172,43 @@ impl CPU {
                     _ => {panic!("Yet to Add Support for more Instruction in StackTarget")},
                 };
                 self.pc.wrapping_add(1)
+            },
+
+            Instruction::CALL(function) => {
+                let jump_condition = match function{
+                    JumpTarget::NotZero => !self.registers.f.zero,
+                    _=> {panic!("Yet to Add more Conditions")},
+                };
+                self.call(jump_condition)
+            }
+
+            Instruction::RET(function) => {
+                let jump_condition = match function {
+                    JunpTarget::NotZero => !self.registers.f.zero,
+                    _=>{panic!("Yet to add more Conditions")}
+                };
+                self.return_(jump_condition)
             }
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
+        }
+    }
+
+    fn call(&mut self,should_jump: bool) -> u16{
+        let next_pc = self.pc.wrapping_add(3);
+        if should_jump{
+            self.push(next_pc);
+            self.read_next_word()
+        }else{
+            next_pc
+        }
+    }
+
+    fn return_(&mut self,should_jump: bool) -> u16{
+        if should_jump{
+            self.pop()
+        }else{
+            self.pc.wrapping_add(1)
         }
     }
 
