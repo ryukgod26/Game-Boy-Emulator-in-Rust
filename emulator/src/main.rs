@@ -3,7 +3,7 @@ const SUBTRACT_FLAG_BYTE_POSITION: u8 = 6;
 const HALF_CARRY_FLAG_BYTE_POSITION: u8 = 5;
 const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
-let is_halted: bool = false;
+static is_halted: bool = false;
 
 struct FlagsRegister{
     zero: bool,
@@ -35,7 +35,7 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(target),POP(target),CALL(function),RET(function),NOP,Halt
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JunpTarget),RET(JunpTarget),NOP,Halt
 }
 
 enum ArithmeticTarget{
@@ -63,11 +63,15 @@ enum LoadType{
 }
 
 enum StackTarget{
-    BC,HL
+    AF,DE,BC,HL
 }
 
 enum JumpTarget{
-    NotZero
+    NotZero,
+    Zero,
+    NotCarry,
+    Carry,
+    Always
 }
 
 impl Registers{
@@ -128,7 +132,7 @@ impl CPU {
 
             Instruction::Add(target) => {
                 match target{
-                    ArithmeticTarget::C{
+                    ArithmeticTarget::C => {
                         let value = self.registers.c;
                         let new_value = self.add(value);
                         self.registers.a = new_value;
@@ -139,6 +143,7 @@ impl CPU {
             },
 
             Instruction::LD(Loadtype) => {
+                match Loadtype{
                 Loadtype::Byte(target,source) => {
                     let source_val = match source {
                         LoadByteSource::A => self.registers.a,
@@ -146,6 +151,7 @@ impl CPU {
                         LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
                         _ => {panic!("Other Sources Not Implemented!!!")}
                     };
+                
                     match target{
                         LoadByteTarget::A => self.registers.a = source_val,
                         LoadByteTarget::HLI => self.bus.write_byte(self.registers.get_hl(),source_val),
@@ -156,7 +162,9 @@ impl CPU {
                         _ => self.pc.wrapping_add(1),
                     }
                 }
+                
                 _ => {panic!("Other Load Types not Implemented Yet")}
+                }
             },
 
             Instruction::PUSH(target) => {
@@ -259,10 +267,10 @@ impl CPU {
         if prefixed{
             instruction_byte = self.bus.read_byte(self.pc + 1);
         }
-        let next_pc = if let Some(instruction) = Instruction::from_,byte(instruction_byte,prefixed){
+        let next_pc = if let Some(instruction) = Instruction::from_byte(instruction_byte,prefixed){
             self.execute(instruction)
         } else{
-            let description = format!("0x{}{}");
+            let description = format!("0x{}{:x}",if prefixed { "cb" } else {""},instruction_byte);
             panic!("Cannot find Instruction found fot: 0x{:x}",instruction_byte);
         };
         self.pc = next_pc;
@@ -298,7 +306,7 @@ impl Instruction{
 
     fn from_prefixed_byte(byte: u8)->Option<Instruction>{
         match byte{
-            0x00 => Some(Instruction::RLC(PrefixTarget:B)),
+            0x00 => Some(Instruction::RLC(PrefixTarget::B)),
             _ => None,
         }
     }
