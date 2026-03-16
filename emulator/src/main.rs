@@ -35,7 +35,7 @@ struct MemoryBus{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JunpTarget),RET(JunpTarget),NOP,Halt
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt
 }
 
 enum ArithmeticTarget{
@@ -59,7 +59,11 @@ enum LoadByteSource{
 }
 
 enum LoadType{
-    Byte(LoadByteTarget,LoadByteSourxe)
+    Byte(LoadByteTarget,LoadByteSource)
+}
+
+enum IncDecTarget{
+    BC,DE
 }
 
 enum StackTarget{
@@ -80,8 +84,8 @@ impl Registers{
     }
 
     fn set_bc(&mut self, value: u16){
-        self.b = (value && 0xFF00) >> 8 as u8;
-        self.c = (value && 0xFF) as u8;
+        self.b = ((value & 0xFF00) >> 8) as u8;
+        self.c = (value & 0xFF) as u8;
     }
 }
 
@@ -103,7 +107,7 @@ impl std::convert::From<u8> for FlagsRegister{
         let half_carry = ((byte >> HALF_CARRY_FLAG_BYTE_POSITION) & 0b1) != 0;
         let carry = ((byte >> CARRY_FLAG_BYTE_POSITION) & 0b1) != 0;
 
-        FlagRegister{
+        FlagsRegister{
             zero,
             subtract,
             half_carry,
@@ -116,7 +120,7 @@ impl std::convert::From<u8> for FlagsRegister{
 impl CPU {
     fn execute(&mut self,instruction: Instruction) -> u16{
         if is_halted{
-            return
+            return self.pc
         }
         match instruction{
             Instruction::Jp(target) => {
@@ -127,7 +131,7 @@ impl CPU {
                     JumpTest::Carry => self.registers.f.carry,
                     JumpTest::Always => true,
                 };
-                self.junp(jump_condition)
+                self.jump(jump_condition)
             },
 
             Instruction::Add(target) => {
@@ -144,7 +148,7 @@ impl CPU {
 
             Instruction::LD(Loadtype) => {
                 match Loadtype{
-                Loadtype::Byte(target,source) => {
+                LoadType::Byte(target,source) => {
                     let source_val = match source {
                         LoadByteSource::A => self.registers.a,
                         LoadByteSource::D8 => self.read_next_byte(),
@@ -233,7 +237,7 @@ impl CPU {
         }
     }
 
-    fn push(&mut self,val: u16){
+    fn push(&mut self,value: u16){
         self.sp = self.sp.wrapping_sub(1);
         self.bus.write_byte(self.sp, ((value &0xFF00) >>8) as u8);
 
@@ -253,11 +257,11 @@ impl CPU {
     }
 
     fn add(&mut self,value: u8) -> u8{
-        let(new_value, is_overflow) = self.registers.a.overflowing_add(valuw);
+        let(new_value, is_overflow) = self.registers.a.overflowing_add(value);
         self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = false;
         self.registersf.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
-        self.registers.f.carry = did_overflow;
+        self.registers.f.carry = is_overflow;
         new_value
     }
 
@@ -277,8 +281,8 @@ impl CPU {
     }
 
     fn jump(&self,condition:bool) ->u16 {
-        if (condition) {
-            let least_significiant_byte = self.bus.read_byte(self.pc +1) as u16;
+        if condition {
+            let least_significant_byte = self.bus.read_byte(self.pc +1) as u16;
             let most_significant_byte = self.bus.read_byte(self.pc + 2) as u16;
             (most_significant_byte<<8) | least_significant_byte
         }
@@ -295,7 +299,7 @@ impl MemoryBus{
 }
 
 impl Instruction{
-    fn from_byte(byte: u8,prefized: bool) -> Option<Instruction>{
+    fn from_byte(byte: u8,prefixed: bool) -> Option<Instruction>{
         if prefixed{
             from_prefixed_byte(byte)
         }
