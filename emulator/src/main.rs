@@ -5,6 +5,12 @@ const CARRY_FLAG_BYTE_POSITION: u8 = 4;
 
 static is_halted: bool = false;
 
+const VRAM_BEGIN: usize = 0x8000;
+const VRAM_END: usize = 0x9FFF;
+const VRAM_SIZE: usize = VRAM_BEGIN - VRAM_END + 1;
+
+type Tile = [[TilePixelValue; 8]; 8]
+
 struct FlagsRegister{
     zero: bool,
     subtract: bool,
@@ -32,6 +38,11 @@ struct CPU{
 
 struct MemoryBus{
     memory: [u8; 0xFFFF]
+}
+
+struct GPU{
+    vram: [u8; VRAM_SIZE],
+    tile_set: [Tile, 384],
 }
 
 enum Instruction{
@@ -86,9 +97,9 @@ enum TilePixelValue{
     Three,
 }
 
-const VRAM_BEGIN: usize = 0x8000;
-const VRAM_END: usize = 0x9FFF;
-const VRAM_SIZE: usize = VRAM_BEGIN - VRAM_END + 1;
+fn empty_tile() -> Tile{
+    [[TilePixelValue; 8]; 8]
+}
 
 impl Registers{
     fn get_bc(&self) -> u16{
