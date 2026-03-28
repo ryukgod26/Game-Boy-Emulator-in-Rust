@@ -78,6 +78,18 @@ enum JumpTarget{
     Always
 }
 
+#[derive(Copy,Clone)]
+enum TilePixelValue{
+    Zero,
+    One,
+    Two,
+    Three,
+}
+
+const VRAM_BEGIN: usize = 0x8000;
+const VRAM_END: usize = 0x9FFF;
+const VRAM_SIZE: usize = VRAM_BEGIN - VRAM_END + 1;
+
 impl Registers{
     fn get_bc(&self) -> u16{
         (self.b as u16) << 8 | (self.c as u16)
