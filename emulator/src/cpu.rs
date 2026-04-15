@@ -1,17 +1,16 @@
-use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus
-
-};
+use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarget,LoadByteTarget,LoadType,LoadByteSource,JumpTarget};
 
 pub struct CPU{
     pub registers: Registers,
     pub pc: u16,
     pub sp: u16,
     pub bus: MemoryBus,
+    pub is_halted: bool,
 }
 
 impl CPU {
     fn execute(&mut self,instruction: Instruction) -> u16{
-        if is_halted{
+        if self.is_halted{
             return self.pc
         }
         match instruction{
@@ -34,7 +33,7 @@ impl CPU {
                         self.registers.a = new_value;
                         self.pc.wrapping_add(1)
                     }
-                _ => {}
+                _ => (self.pc.wrapping_add(1))
                 }
             },
 
@@ -43,6 +42,12 @@ impl CPU {
                 LoadType::Byte(target,source) => {
                     let source_val = match source {
                         LoadByteSource::A => self.registers.a,
+                        LoadByteSource::B => self.registers.b,
+                        LoadByteSource::C => self.registers.c,
+                        LoadByteSource::D => self.registers.d,
+                        LoadByteSource::E => self.registers.e,
+                        LoadByteSource::H => self.registers.h,
+                        LoadByteSource::L => self.registers.l,
                         LoadByteSource::D8 => self.read_next_byte(),
                         LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
                         _ => {panic!("Other Sources Not Implemented!!!")}
@@ -50,6 +55,12 @@ impl CPU {
                 
                     match target{
                         LoadByteTarget::A => self.registers.a = source_val,
+                        LoadByteTarget::B => self.registers.b = source_val,
+                        LoadByteTarget::C => self.registers.c = source_val,
+                        LoadByteTarget::D => self.registers.d = source_val,
+                        LoadByteTarget::E => self.registers.e = source_val,
+                        LoadByteTarget::H => self.registers.h = source_val,
+                        LoadByteTarget::L => self.registers.l = source_val,
                         LoadByteTarget::HLI => self.bus.write_byte(self.registers.get_hl(),source_val),
                         _ => {panic!("Other Targets Not Implemented")}
                     };
@@ -70,7 +81,7 @@ impl CPU {
                     _ => {panic!("Other Targets not Supported Yet!!!")}
                 };
                 self.push(value);
-                self.pc.wrapping_add(1);
+                self.pc.wrapping_add(1)
             },
 
             Instruction::POP(target) => {
@@ -94,18 +105,19 @@ impl CPU {
 
             Instruction::RET(function) => {
                 let jump_condition = match function {
-                    JunpTarget::NotZero => !self.registers.f.zero,
+                    JumpTarget::NotZero => !self.registers.f.zero,
                     _=>{panic!("Yet to add more Conditions")}
                 };
                 self.return_(jump_condition)
             },
 
             Instruction::NOP => {
-                self.pc = self.pc + 1;
+                self.pc.wrapping_add(1)
             },
 
             Instruction::Halt => {
-                is_halted = true;
+                self.is_halted = true;
+                self.pc.wrapping_add(1)
             },
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
@@ -139,7 +151,7 @@ impl CPU {
         
     }
 
-    fn pop(&mut self,val: u16) -> u16{
+    fn pop(&mut self) -> u16{
         let lsb = self.bus.read_byte(self.sp) as u16;
         self.sp = self.sp.wrapping_add(1);
 
@@ -179,7 +191,15 @@ impl CPU {
             let most_significant_byte = self.bus.read_byte(self.pc + 2) as u16;
             (most_significant_byte<<8) | least_significant_byte
         } else{
-            self.pc.wrapping_add(3);
+            self.pc.wrapping_add(3)
         }
+    }
+
+    fn read_next_word(&self) -> u16{
+        ((self.bus.read_byte(self.pc + 2) as u16) << 8) | (self.bus.read_byte(self.pc+1) as u16)
+    }
+
+    fn read_next_byte(&self) -> u8{
+        (self.bus.read_byte(self.pc + 1) as u8)
     }
 }

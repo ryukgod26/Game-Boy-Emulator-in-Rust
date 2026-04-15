@@ -1,5 +1,5 @@
 pub enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType,LoadSource),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt,INC(IncDecTarget)
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt,INC(IncDecTarget)
 }
 
 pub enum ArithmeticTarget{
