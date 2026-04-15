@@ -9,7 +9,7 @@ const VRAM_BEGIN: usize = 0x8000;
 const VRAM_END: usize = 0x9FFF;
 const VRAM_SIZE: usize = VRAM_BEGIN - VRAM_END + 1;
 
-type Tile = [[TilePixelValue; 8]; 8]
+type Tile = [[TilePixelValue; 8]; 8];
 
 struct FlagsRegister{
     zero: bool,
@@ -47,7 +47,7 @@ struct GPU{
 }
 
 enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt
+    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType,LoadSource),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt,INC(IncDecTarget)
 }
 
 enum ArithmeticTarget{
@@ -88,6 +88,10 @@ enum JumpTarget{
     NotCarry,
     Carry,
     Always
+}
+
+enum PrefixTarget{
+    A,B,C,D,E,H,L
 }
 
 #[derive(Copy,Clone)]
@@ -345,7 +349,7 @@ impl CPU {
             (most_significant_byte<<8) | least_significant_byte
         }
         else{
-            self.pc.wrapping_add(3)
+            self.pc.wrapping_add(3),
         }
     }
 }
@@ -377,10 +381,10 @@ impl MemoryBus{
 impl Instruction{
     fn from_byte(byte: u8,prefixed: bool) -> Option<Instruction>{
         if prefixed{
-            from_prefixed_byte(byte)
+            Self::from_prefixed_byte(byte)
         }
         else{    
-            from_not_prefixed_byte(byte)
+            Self::from_not_prefixed_byte(byte)
         }
     }
 
@@ -393,7 +397,7 @@ impl Instruction{
 
     fn from_not_prefixed_byte(byte:u8) -> Option<Instruction>{
         match byte{
-            0x06 => Some(Instructon::LD(LoadType::Byte(Target::B),LoadSource::NextByte)),
+            0x06 => Some(Instruction::LD(LoadType::Byte(Target::B),LoadSource::NextByte)),
             0x0E => Some(Instruction::LD(LoadType::Byte(Target::C),LoadSource::NextByte)),
             0x02 => Some(Instruction::INC(IncDecTarget::BC)),
             0x13 => Some(Instruction::INC(IncDecTarget::DE)),
