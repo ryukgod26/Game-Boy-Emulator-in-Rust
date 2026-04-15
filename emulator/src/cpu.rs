@@ -1,8 +1,10 @@
+use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus};
+
 pub struct CPU{
-    registers: Registers,
-    pc: u16,
-    sp: u16,
-    bus: MemoryBus,
+    pub registers: Registers,
+    pub pc: u16,
+    pub sp: u16,
+    pub bus: MemoryBus,
 }
 
 impl CPU {

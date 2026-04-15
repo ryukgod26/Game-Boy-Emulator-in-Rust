@@ -1,11 +1,13 @@
+use super::GPU;
+
 pub struct MemoryBus{
     memory: [u8; 0xFFFF],
-    gpu: GPU{},
+    gpu: GPU,
 }
 
 
 impl MemoryBus{
-    fn read_byte(&self,address: u16) ->u8{
+    pub fn read_byte(&self,address: u16) ->u8{
         //self.memory[address as usize]
         let address = address as usize;
         match address{
@@ -16,7 +18,7 @@ impl MemoryBus{
         }
     }
 
-    fn write_byte(&self, address: u16, value: u8) {
+    pub fn write_byte(&self, address: u16, value: u8) {
         let address = address as usize;
         match address{
             VRAM_BEGIN...VRAM_END {
