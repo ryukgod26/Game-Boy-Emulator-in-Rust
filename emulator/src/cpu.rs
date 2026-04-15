@@ -1,4 +1,6 @@
-use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus};
+use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus
+
+};
 
 pub struct CPU{
     pub registers: Registers,

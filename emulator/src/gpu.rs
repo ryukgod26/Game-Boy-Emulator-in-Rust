@@ -1,3 +1,4 @@
+use super::{VRAM_BEGIN,VRAM_SIZE};
 pub struct GPU{
     vram: [u8; VRAM_SIZE],
     tile_set: [Tile; 384],
