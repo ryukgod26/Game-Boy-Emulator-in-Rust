@@ -15,23 +15,6 @@ pub use gpu::GPU;
 static is_halted: bool = false;
 
 
-type Tile = [[TilePixelValue; 8]; 8];
-
-
-
-
-#[derive(Copy,Clone)]
-enum TilePixelValue{
-    Zero,
-    One,
-    Two,
-    Three,
-}
-
-fn empty_tile() -> Tile{
-    [[TilePixelValue; 8]; 8]
-}
-
 
 fn main() {
     println!("Hello, world!");

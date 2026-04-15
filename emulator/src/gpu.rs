@@ -3,8 +3,31 @@ pub struct GPU{
     vram: [u8; VRAM_SIZE],
     tile_set: [Tile; 384],
 }
+
+type TileRow = [TilePixelValue;8];
+type Tile = [TileRow;8];
+
+#[derive(Copy,Clone)]
+pub enum TilePixelValue{
+    Zero,
+    One,
+    Two,
+    Three,
+}
+
+fn empty_tile() -> Tile{
+    [[Default::default(); 8]; 8]
+}
+
+
+impl Default for TilePixelValue{
+    fn default() -> Self {
+        TilePixelValue::Zero
+    }
+}
+
 impl GPU{
-fn write_vram(&self, index: usize,value: u8){
+fn write_vram(&mut self, index: usize,value: u8){
     self.vram[index] = value;
 
     if index >= 0x1800 {return}
@@ -35,5 +58,6 @@ fn write_vram(&self, index: usize,value: u8){
 fn read_vram(&self,addr: usize) -> u8{
     self.vram[addr]
 }
+
 }
 
