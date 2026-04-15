@@ -38,12 +38,12 @@ struct CPU{
 
 struct MemoryBus{
     memory: [u8; 0xFFFF],
-    gpu: GPU{}
+    gpu: GPU{},
 }
 
 struct GPU{
     vram: [u8; VRAM_SIZE],
-    tile_set: [Tile, 384],
+    tile_set: [Tile; 384],
 }
 
 enum Instruction{
@@ -67,7 +67,7 @@ enum LoadByteTarget{
 }
 
 enum LoadByteSource{
-    A,B,C,D,E,H,L,DB,HLI
+    A,B,C,D,E,H,L,D8,HLI
 }
 
 enum LoadType{
@@ -208,8 +208,8 @@ impl CPU {
                 }
             },
 
-            Instruction::LD(Loadtype) => {
-                match Loadtype{
+            Instruction::LD(load_type) => {
+                match load_type{
                 LoadType::Byte(target,source) => {
                     let source_val = match source {
                         LoadByteSource::A => self.registers.a,
@@ -223,6 +223,7 @@ impl CPU {
                         LoadByteTarget::HLI => self.bus.write_byte(self.registers.get_hl(),source_val),
                         _ => {panic!("Other Targets Not Implemented")}
                     };
+
                     match source{
                         LoadByteSource::D8 => self.pc.wrapping_add(2),
                         _ => self.pc.wrapping_add(1),
@@ -259,7 +260,7 @@ impl CPU {
                     _=> {panic!("Yet to Add more Conditions")},
                 };
                 self.call(jump_condition)
-            }
+            },
 
             Instruction::RET(function) => {
                 let jump_condition = match function {
@@ -267,15 +268,15 @@ impl CPU {
                     _=>{panic!("Yet to add more Conditions")}
                 };
                 self.return_(jump_condition)
-            }
+            },
 
-            Inatruction::NOP => {
+            Instruction::NOP => {
                 self.pc = self.pc + 1;
-            }
+            },
 
             Instruction::Halt => {
                 is_halted = true;
-            }
+            },
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
         }
@@ -322,7 +323,7 @@ impl CPU {
         let(new_value, is_overflow) = self.registers.a.overflowing_add(value);
         self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = false;
-        self.registersf.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
+        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
         self.registers.f.carry = is_overflow;
         new_value
     }
@@ -349,7 +350,7 @@ impl CPU {
             (most_significant_byte<<8) | least_significant_byte
         }
         else{
-            self.pc.wrapping_add(3),
+            self.pc.wrapping_add(3);
         }
     }
 }
