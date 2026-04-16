@@ -19,6 +19,17 @@ macro_rules! manipulate_8bit_register{
     }
 }
 
+macro_rules! manipulate_16bit_resgister{
+    ($self: ident, $get_func: ident => $func: ident => $set_func: ident){
+        {
+            let val = $self.registers.$get_func();
+            let result = $func(val);
+            $self.registers.$set_func(result);
+            $self.pc.wrapping_add(1);
+        }
+    }
+}
+
 impl CPU {
     pub fn new() -> Self{
         CPU{
@@ -45,11 +56,20 @@ impl CPU {
                     IncDwcTargwt::E => manipulate_8bit_register!(self: e => inc_8bit => e),
                     ImcDecTarget::H => manipulate_8bit_register!(self: h => inc_8bit => h),
                     IncDecTarget::L => manipulate_8bit_register!(self: l => inc_8bit => l),
-                    IncDecTarget::AF => 
-                    IncDecTarget::BC =>
-                    IncDecTarget::HL =>
-                    IncDecTarget::SP =>
-                    IncDecTarget::HLI =>
+                    IncDecTarget::AF => manipulate_16bit_register!(self: get_af => inc_16bit => set_af)
+                    IncDecTarget::BC => manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc)
+                    IncDecTarget::HL => manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl)
+                    IncDecTarget::SP => {
+                        let amount = self.sp;
+                        let result = self.inc_16bit(amount);
+                        self.sp = result;
+                    }
+                    IncDecTarget::HLI => {
+                        let hl = self.registers.get_hl();
+                        let amount = self.bus.read_byte(hl);
+                        let result = inc_8bit(amount);
+                        self.bus.write_byte(hl,result)
+                    }
                 }
             }
 
