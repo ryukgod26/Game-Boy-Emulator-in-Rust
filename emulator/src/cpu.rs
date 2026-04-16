@@ -46,9 +46,8 @@ macro_rules! manipulate_16bit_register{
         ($self: ident : $get_func: ident => $func: ident => $set_func: ident) => {
         {
             let val = $self.registers.$get_func();
-            let result = $func(val);
+            let result = $self.$func(val);
             $self.registers.$set_func(result);
-            $self.pc.wrapping_add(1);
         }
     };
 }
@@ -120,6 +119,18 @@ impl CPU {
             bus: MemoryBus::new(),
             is_halted: false
         }
+    }
+
+    fn inc_8bit(&mut self,value: u8) -> u8{
+        let new_value = value.wrapping_add(1);
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = value & 0xF == 0xF;
+        new_value
+    }
+
+    fn inc_16bit(&mut self,value: u16) -> u16{
+        value.wrapping_add(1)
     }
 
     fn execute(&mut self,instruction: Instruction) -> u16{
