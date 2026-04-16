@@ -1,5 +1,5 @@
-   0.024381400s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint error for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: false }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
-   0.024427400s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator\target\debug\.fingerprint\emulator-4f6939fa065b2bb4\bin-emulator`
+   0.023334200s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint error for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: false }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
+   0.023377700s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator\target\debug\.fingerprint\emulator-4f6939fa065b2bb4\bin-emulator`
 
 Caused by:
     The system cannot find the file specified. (os error 2)
@@ -26,8 +26,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.036149900s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint error for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: true }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
-   0.036176600s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator\target\debug\.fingerprint\emulator-c334f098137a7343\test-bin-emulator`
+   0.035367700s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint error for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: true }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
+   0.035393800s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator\target\debug\.fingerprint\emulator-c334f098137a7343\test-bin-emulator`
 
 Caused by:
     The system cannot find the file specified. (os error 2)
@@ -55,6 +55,6 @@ Stack backtrace:
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
     Checking emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)
-error: could not compile `emulator` (bin "emulator" test) due to 25 previous errors; 5 warnings emitted
+error: could not compile `emulator` (bin "emulator") due to 3 previous errors
 warning: build failed, waiting for other jobs to finish...
-error: could not compile `emulator` (bin "emulator") due to 25 previous errors; 5 warnings emitted
+error: could not compile `emulator` (bin "emulator" test) due to 3 previous errors

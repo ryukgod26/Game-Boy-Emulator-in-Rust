@@ -1,4 +1,4 @@
-use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarget,LoadByteTarget,LoadType,LoadByteSource,JumpTarget,IncDecTarget};
+use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarget,LoadByteTarget,LoadType,LoadByteSource,JumpTarget,IncDecTarget,LoadWordTarget,Indirect};
 
 pub struct CPU{
     pub registers: Registers,
@@ -133,10 +133,10 @@ impl CPU {
         value.wrapping_add(1)
     }
 
-    fn execute(&mut self,instruction: Instruction) -> u16{
-        if self.is_halted{
-            return self.pc
-        }
+    fn execute(&mut self,instruction: Instruction) -> (u16,u8){
+        // if self.is_halted{
+        //     return self.pc
+        // }
         match instruction{
 
             Instruction::INC(target) =>{
@@ -148,25 +148,31 @@ impl CPU {
                     IncDecTarget::E => manipulate_8bit_register!(self: e => inc_8bit => e),
                     IncDecTarget::H => manipulate_8bit_register!(self: h => inc_8bit => h),
                     IncDecTarget::L => manipulate_8bit_register!(self: l => inc_8bit => l),
-                    IncDecTarget::AF => manipulate_16bit_register!(self: get_af => inc_16bit => set_af),
-                    IncDecTarget::BC => manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc),
-                    IncDecTarget::HL => manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl),
-                    IncDecTarget::DE => manipulate_16bit_register!(self: get_de => inc_16bit => set_de),
+                    // IncDecTarget::AF => manipulate_16bit_register!(self: get_af => inc_16bit => set_af),
+                    IncDecTarget::BC => {manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc)}
+                    IncDecTarget::HL => {manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl)}
+                    IncDecTarget::DE => {manipulate_16bit_register!(self: get_de => inc_16bit => set_de)}
                     IncDecTarget::SP => {
                         let amount = self.sp;
                         let result = self.inc_16bit(amount);
-                        self.sp = result
+                        self.sp = result;
                     }
                     IncDecTarget::HLI => {
                         let hl = self.registers.get_hl();
                         let amount = self.bus.read_byte(hl);
                         let result = self.inc_8bit(amount);
-                        self.bus.write_byte(hl,result)
+                        self.bus.write_byte(hl,result);
                     }
-                }
+                };
+                let cycles = match target {
+                    IncDecTarget::BC | IncDecTarget::DE | IncDecTarget::HL | IncDecTarget::SP=> 8,
+                    IncDecTarget::HLI => 12,
+                    _ => 4,
+                };
+                (self.pc.wrapping_add(1),cycles)
             }
 
-            Instruction::Jp(target) => {
+            Instruction::JP(target) => {
                 let jump_condition = match target{
                     JumpTest::NotZero => !self.registers.f.zero,
                     JumpTest::Zero => self.registers.f.zero,
@@ -178,15 +184,7 @@ impl CPU {
             },
 
             Instruction::Add(target) => {
-                match target{
-                    ArithmeticTarget::C => {
-                        let value = self.registers.c;
-                        let new_value = self.add(value);
-                        self.registers.a = new_value;
-                        self.pc.wrapping_add(1)
-                    }
-                _ => (self.pc.wrapping_add(1))
-                }
+                arithmetic_instruction!( target , self : add )
             },
 
             Instruction::LD(load_type) => {
@@ -218,10 +216,47 @@ impl CPU {
                     };
 
                     match source{
-                        LoadByteSource::D8 => self.pc.wrapping_add(2),
-                        _ => self.pc.wrapping_add(1),
+                        LoadByteSource::D8 => (self.pc.wrapping_add(2),8),
+                        LoadByteSource::HLI => (self.pc.wrapping_add(1),8),
+                        _ => (self.pc.wrapping_add(1),4),
                     }
                 }
+
+                LoadType::Word(target) => {
+                    let word = self.read_next_word();
+                    match target{
+                        LoadWordTarget::BC => self.registers.set_bc(word),
+                        LoadWordTarget::DE => self.registers.set_de(word),
+                        LoadWordTarget::HL => self.registers.set_hl(word),
+                        LoadWordTarget::SP => self.sp = word,
+                    };
+                    (self.pc.wrapping_add(3),12)
+                }
+
+                LoadType::AFromIndirect(source) => {
+                    self.registers.a = match source{
+                        Indirect::BCIndirect => self.bus.read_byte(self.registers.get_bc()),
+                        Indirect::DEIndirect => self.bus.read_byte(self.registers.get_de()),
+                        Indirect::HLIndirectMinus => {
+                            let hl = self.registers.get_hl();
+                            self.registers.set_hl(hl.wrapping_sub(1));
+                            self.bus.read_byte(hl)
+                        }
+                        Indirect::HLIndirectPlus => {
+                            let hl = self.registers.get_hl();
+                            self.registers.set_hl(hl.wrapping_add(1));
+                            self.bus.read_byte(hl)
+                        }
+                        Indirect::WordIndirect => self.bus.read_byte(self.read_next_word()),
+                        Indirect::LastByteIndirect => self.bus.read_byte(0xFF00 + self.registers.c as u16)
+                    };
+
+                    match source{
+                        Indirect::WordIndirect => (self.pc.wrapping_add(3), 16),
+                        _ => (self.pc.wrapping_add(1),8)
+                    }
+                }
+                
                 
                 _ => {panic!("Other Load Types not Implemented Yet")}
                 }
@@ -236,7 +271,7 @@ impl CPU {
                     _ => {panic!("Other Targets not Supported Yet!!!")}
                 };
                 self.push(value);
-                self.pc.wrapping_add(1)
+                (self.pc.wrapping_add(1), 16)
             },
 
             Instruction::POP(target) => {
@@ -248,7 +283,7 @@ impl CPU {
                     StackTarget::HL => self.registers.set_hl(result),
                     _ => {panic!("Yet to Add Support for more Instruction in StackTarget")},
                 };
-                self.pc.wrapping_add(1)
+                (self.pc.wrapping_add(1), 12)
             },
 
             Instruction::CALL(function) => {
@@ -268,16 +303,17 @@ impl CPU {
             },
 
             Instruction::NOP => {
-                self.pc.wrapping_add(1)
+                (self.pc.wrapping_add(1), 4)
             },
 
             Instruction::Halt => {
                 self.is_halted = true;
-                self.pc.wrapping_add(1)
+                (self.pc.wrapping_add(1),4)
             },
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
-        }
+        };
+        
     }
 
     fn call(&mut self,should_jump: bool) -> u16{
@@ -341,13 +377,15 @@ impl CPU {
         self.pc = next_pc;
     }
 
-    fn jump(&self,condition:bool) ->u16 {
+    fn jump(&self,condition:bool) -> (u16,u8) {
         if condition {
-            let least_significant_byte = self.bus.read_byte(self.pc +1) as u16;
-            let most_significant_byte = self.bus.read_byte(self.pc + 2) as u16;
-            (most_significant_byte<<8) | least_significant_byte
+            // let least_significant_byte = self.bus.read_byte(self.pc +1) as u16;
+            // let most_significant_byte = self.bus.read_byte(self.pc + 2) as u16;
+            // (most_significant_byte<<8) | least_significant_byte
+            (self.read_next_word(),16)
         } else{
-            self.pc.wrapping_add(3)
+            // self.pc.wrapping_add(3)
+            (self.pc.wrapping_add(3),12)
         }
     }
 

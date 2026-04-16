@@ -1,5 +1,5 @@
 pub enum Instruction{
-    Add(ArithmeticTarget),Jp(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt,INC(IncDecTarget)
+    Add(ArithmeticTarget),JP(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt,INC(IncDecTarget)
 }
 
 pub enum ArithmeticTarget{
@@ -23,11 +23,19 @@ pub enum LoadByteSource{
 }
 
 pub enum LoadType{
-    Byte(LoadByteTarget,LoadByteSource)
+    Byte(LoadByteTarget,LoadByteSource), Word(LoadWordTarget), AFromIndirect(Indirect)
+}
+
+pub enum Indirect{
+    BCIndirect,DEIndirect,HLIndirectMinus,HLIndirectPlus,WordIndirect,LastByteIndirect
+}
+
+pub enum LoadWordTarget {
+    BC,DE,HL,SP
 }
 
 pub enum IncDecTarget{
-    A,B,C,D,E,H,L,AF,BC,DE,SP,HL,HLI,
+    A,B,C,D,E,H,L,BC,DE,SP,HL,HLI,
 }
 
 pub enum StackTarget{
