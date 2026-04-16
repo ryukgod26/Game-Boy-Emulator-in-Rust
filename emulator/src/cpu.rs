@@ -9,6 +9,16 @@ pub struct CPU{
 }
 
 impl CPU {
+    pub fn new() -> Self{
+        CPU{
+            registers: Registers::new(),
+            pc: 0x0,
+            sp: 0x00,
+            bus: MemoryBus::new(),
+            is_halted: false
+        }
+    }
+
     fn execute(&mut self,instruction: Instruction) -> u16{
         if self.is_halted{
             return self.pc
@@ -77,7 +87,10 @@ impl CPU {
 
             Instruction::PUSH(target) => {
                 let value = match target{
+                    StackTarget::AF => self.registers.get_af(),
                     StackTarget::BC => self.registers.get_bc(),
+                    StackTarget::DE => self.registers.get_de(),
+                    StackTarget::HL => self.registers.get_hl(),
                     _ => {panic!("Other Targets not Supported Yet!!!")}
                 };
                 self.push(value);
@@ -87,9 +100,10 @@ impl CPU {
             Instruction::POP(target) => {
                 let result = self.pop();
                 match target{
-                    StackTarget::BC => {
-                        self.registers.set_bc(result)
-                    }
+                    StackTarget::AF => self.registers.set_af(result);
+                    StackTarget::BC => self.registers.set_bc(result),
+                    StackTarget::DE => self.registers.set_de(result),
+                    StackTarget::HL => self.registers.set_hl(result),
                     _ => {panic!("Yet to Add Support for more Instruction in StackTarget")},
                 };
                 self.pc.wrapping_add(1)
