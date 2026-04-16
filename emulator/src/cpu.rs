@@ -9,14 +9,37 @@ pub struct CPU{
 }
 
 macro_rules! manipulate_8bit_register{
-    ($self: ident : $reg: ident => $func: ident => $_flag_reg: ident){
+
+    ($self: ident : $getter: ident => $func: ident) => {
+        {
+            let value = $self.registers.$getter;
+            $self.$func(value)
+        }
+    };
+
+    ($self: ident : ($register: ident @ bit_position ) => $func: ident => $setter: ident) => {
+        {
+            let result = manipulate_8bit_register!($self: ($register @ bit_position) => $func);
+            $self.registers.$setter = result;
+        }
+    };
+
+    ($self: ident : $reg: ident => $func: ident => $_flag_reg: ident) => {
         {
             let val = $self.registers.$reg;
             let result = $func(val);
             $self.registers.$reg = result;
             $self.pc.wrapping_add(1);
         }
+    };
+
+    ($self: ident : ($register: ident @ $bit_position: ident) => $func: ident) =>{
+        {
+            let value = $self.registers.$register;
+            $self.$func(value,$bit_position)
+        }
     }
+
 }
 
 macro_rules! manipulate_16bit_resgister{
