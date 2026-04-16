@@ -257,6 +257,38 @@ impl CPU {
                     }
                 }
                 
+                LoadType::IndirectFromA(target) => {
+                    let a = self.registers.a;
+                    match target {
+                        Indirect::BCIndirect => self.bus.write_byte(self.registers.get_bc(), a),
+                        Indirect::DEIndirect => self.bus.write_byte(self.registers.get_de(), a),
+                        Indirect::HLIndirectMinus => {
+                            let hl = self.registers.get_hl();
+                            self.registers.set_hl(hl.wrapping_sub(1));
+                            self.bus.write_byte(hl,a);
+                        }
+                        Indirect::HLIndirectPlus => {
+                            let hl = self.registers.get_hl();
+                            self.registers.set_hl(hl.wrapping_add(1));
+                            self.bus.write_byte(hl, a);
+                        }
+                        Indirect::WordIndirect => self.bus.write_byte(self.read_next_word(), a),
+                        Indirect::LastByteIndirect => self.bus.write_byte(0xFF00 + (self.registers.c as u16), a),
+                    };
+
+                    match target{
+                        Indirect::WordIndirect => (self.pc.wrapping_add(3),16),
+                        _ => (self.pc.wrapping_add(1),8)
+                    }
+                }
+
+                LoadType::AFromByteAddress => {
+                    let offset = self.read_next_byte() as u16;
+                    self.registers.a = self.bus.read_byte(0xFF00 + offset);
+                    (self.pc.wrapping_add(2),12)
+                }
+
+                
                 
                 _ => {panic!("Other Load Types not Implemented Yet")}
                 }
