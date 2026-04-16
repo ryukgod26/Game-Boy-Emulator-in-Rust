@@ -27,7 +27,7 @@ pub enum LoadType{
 }
 
 pub enum IncDecTarget{
-    BC,DE
+    A,B,C,D,E,H,L,AF,BC,DE,SP,HL,HLI,
 }
 
 pub enum StackTarget{

@@ -8,6 +8,17 @@ pub struct CPU{
     pub is_halted: bool,
 }
 
+macro_rules! manipulate_8bit_register{
+    ($self: ident : $reg: ident => $func: ident => $_flag_reg: ident){
+        {
+            let val = $self.registers.$reg;
+            let result = $func(val);
+            $self.registers.$reg = result;
+            $self.pc.wrapping_add(1);
+        }
+    }
+}
+
 impl CPU {
     pub fn new() -> Self{
         CPU{
@@ -24,6 +35,24 @@ impl CPU {
             return self.pc
         }
         match instruction{
+
+            Instruction::INC(target) =>{
+                match target{
+                    IncDecTarget::A => manipulate_8bit_register!(self: a => inc_8bit => a),
+                    IncDecTarget::B => manipulate_8bit_register!(self: b => inc_8bit => b),
+                    IncDecTarget::C => manipulate_8bit_register!(self: c => inc_8bit => c),
+                    IncDecTarget::D => manipulate_8bit_register!(self: d => inc_8bit => d),
+                    IncDwcTargwt::E => manipulate_8bit_register!(self: e => inc_8bit => e),
+                    ImcDecTarget::H => manipulate_8bit_register!(self: h => inc_8bit => h),
+                    IncDecTarget::L => manipulate_8bit_register!(self: l => inc_8bit => l),
+                    IncDecTarget::AF => 
+                    IncDecTarget::BC =>
+                    IncDecTarget::HL =>
+                    IncDecTarget::SP =>
+                    IncDecTarget::HLI =>
+                }
+            }
+
             Instruction::Jp(target) => {
                 let jump_condition = match target{
                     JumpTest::NotZero => !self.registers.f.zero,
