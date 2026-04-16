@@ -1,4 +1,4 @@
-use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarget,LoadByteTarget,LoadType,LoadByteSource,JumpTarget};
+use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarget,LoadByteTarget,LoadType,LoadByteSource,JumpTarget,IncDecTarget};
 
 pub struct CPU{
     pub registers: Registers,
@@ -29,7 +29,7 @@ macro_rules! manipulate_8bit_register{
             let val = $self.registers.$reg;
             let result = $func(val);
             $self.registers.$reg = result;
-            $self.pc.wrapping_add(1);
+            $self.pc.wrapping_add(1)
         }
     };
 
@@ -42,15 +42,15 @@ macro_rules! manipulate_8bit_register{
 
 }
 
-macro_rules! manipulate_16bit_resgister{
-    ($self: ident, $get_func: ident => $func: ident => $set_func: ident){
+macro_rules! manipulate_16bit_register{
+        ($self: ident : $get_func: ident => $func: ident => $set_func: ident) => {
         {
             let val = $self.registers.$get_func();
             let result = $func(val);
             $self.registers.$set_func(result);
             $self.pc.wrapping_add(1);
         }
-    }
+    };
 }
 
 macro_rules! arithmetic_instruction{
@@ -80,7 +80,7 @@ macro_rules! arithmetic_instruction{
 
             }
         }
-    }
+    };
 
     ($register: ident, $self: ident.$func: ident => a) => {
        match $register{
@@ -107,8 +107,8 @@ macro_rules! arithmetic_instruction{
            ArithmeticTarget::HLI => ($self.pc.wrapping_add(1),8),
            _ => ($self.pc.wrapping_add(1),4)
        }
-    }
-};
+    };
+}
 
 
 impl CPU {
@@ -134,21 +134,22 @@ impl CPU {
                     IncDecTarget::B => manipulate_8bit_register!(self: b => inc_8bit => b),
                     IncDecTarget::C => manipulate_8bit_register!(self: c => inc_8bit => c),
                     IncDecTarget::D => manipulate_8bit_register!(self: d => inc_8bit => d),
-                    IncDwcTargwt::E => manipulate_8bit_register!(self: e => inc_8bit => e),
-                    ImcDecTarget::H => manipulate_8bit_register!(self: h => inc_8bit => h),
+                    IncDecTarget::E => manipulate_8bit_register!(self: e => inc_8bit => e),
+                    IncDecTarget::H => manipulate_8bit_register!(self: h => inc_8bit => h),
                     IncDecTarget::L => manipulate_8bit_register!(self: l => inc_8bit => l),
-                    IncDecTarget::AF => manipulate_16bit_register!(self: get_af => inc_16bit => set_af)
-                    IncDecTarget::BC => manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc)
-                    IncDecTarget::HL => manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl)
+                    IncDecTarget::AF => manipulate_16bit_register!(self: get_af => inc_16bit => set_af),
+                    IncDecTarget::BC => manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc),
+                    IncDecTarget::HL => manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl),
+                    IncDecTarget::DE => manipulate_16bit_register!(self: get_de => inc_16bit => set_de),
                     IncDecTarget::SP => {
                         let amount = self.sp;
                         let result = self.inc_16bit(amount);
-                        self.sp = result;
+                        self.sp = result
                     }
                     IncDecTarget::HLI => {
                         let hl = self.registers.get_hl();
                         let amount = self.bus.read_byte(hl);
-                        let result = inc_8bit(amount);
+                        let result = self.inc_8bit(amount);
                         self.bus.write_byte(hl,result)
                     }
                 }
@@ -230,7 +231,7 @@ impl CPU {
             Instruction::POP(target) => {
                 let result = self.pop();
                 match target{
-                    StackTarget::AF => self.registers.set_af(result);
+                    StackTarget::AF => self.registers.set_af(result),
                     StackTarget::BC => self.registers.set_bc(result),
                     StackTarget::DE => self.registers.set_de(result),
                     StackTarget::HL => self.registers.set_hl(result),
