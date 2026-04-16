@@ -53,6 +53,64 @@ macro_rules! manipulate_16bit_resgister{
     }
 }
 
+macro_rules! arithmetic_instruction{
+    ($register: ident, $self: ident.$func: ident) =>{
+        {
+            match $register{
+                ArithmeticTarget::A => manipulate_8bit_register!($self : a => $work),
+                ArithmeticTarget::B => manipulate_8bit_register!($self : b => $func),
+                ArithmeticTarget::C => manipulate_8bit_register!($self : c => $func),
+                ArithmeticTarget::D => manipulate_8bit_register!($self : d => $func),
+                ArithmeticTarget::E => manipulate_8bit_register!($self : e => $func),
+                ArithmeticTarget::H => manipulate_8bit_register!($self : h => $func),
+                ArithmeticTarget::L => manipulate_8bit_register!($self : l => $func),
+                ArithmeticTarget::D8 => {
+                    let value = $self.read_next_byte();
+                    $self.$func(value);
+                }
+                ArithmeticTarget::HLI => {
+                    let value = $self.bus.read_byte($self.registers.get_hl());
+                    $self.$func(value);
+                }
+            };
+            match $register{
+                ArithmeticTarget::D8 => ($self.pc.wrapping_add(2),8),
+                ArithmeticTarget::HLI => ($self.pc.wrapping_add(1),8),
+                _ => ($self.pc.wrapping_add(1),4)
+
+            }
+        }
+    }
+
+    ($register: ident, $self: ident.$func: ident => a) => {
+       match $register{
+           ArithmeticTarget::A => manipulate_8bit_register!($self : a => $work => a),
+           ArithmeticTarget::B => manipulate_8bit_register!($self : b => $work => a),
+           ArithmeticTarget::C => manipulate_8bit_register!($self : c => $work => a),
+           ArithmeticTarget::D => manipulate_8bit_register!($self : d => $work => a),
+           ArithmeticTarget::E => manipulate_8bit_register!($self : e => $work => a),
+           ArithmeticTarget::H => manipulate_8bit_register!($self : h => $work => a),
+           ArithmeticTarget::L => manipulate_8bit_register!($self : l => $work => a),
+           ArithmeticTarget::D8 => {
+               let val = $self.read_next_byte();
+               let result = $self.$func(val);
+               $self.registers.a = result;
+           }
+           ArithmeticTarget::HLI => {
+               let val = $self.bus.read_byte($self.registers.get_hl());
+               let result = $self.$func(val);
+               $self.registers.a = result;
+           }
+       };
+       match $register{
+           ArithmeticTarget::D8 => ($self.pc.wrapping_add(2),8),
+           ArithmeticTarget::HLI => ($self.pc.wrapping_add(1),8),
+           _ => ($self.pc.wrapping_add(1),4)
+       }
+    }
+};
+
+
 impl CPU {
     pub fn new() -> Self{
         CPU{
