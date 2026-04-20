@@ -2,10 +2,10 @@ use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarge
 
 pub struct CPU{
     pub registers: Registers,
-    pub pc: u16,
-    pub sp: u16,
+    pc: u16,
+    sp: u16,
     pub bus: MemoryBus,
-    pub is_halted: bool,
+    is_halted: bool,
 }
 
 macro_rules! manipulate_8bit_register{
@@ -83,13 +83,13 @@ macro_rules! arithmetic_instruction{
 
     ($register: ident, $self: ident.$func: ident => a) => {
        match $register{
-           ArithmeticTarget::A => manipulate_8bit_register!($self : a => $work => a),
-           ArithmeticTarget::B => manipulate_8bit_register!($self : b => $work => a),
-           ArithmeticTarget::C => manipulate_8bit_register!($self : c => $work => a),
-           ArithmeticTarget::D => manipulate_8bit_register!($self : d => $work => a),
-           ArithmeticTarget::E => manipulate_8bit_register!($self : e => $work => a),
-           ArithmeticTarget::H => manipulate_8bit_register!($self : h => $work => a),
-           ArithmeticTarget::L => manipulate_8bit_register!($self : l => $work => a),
+           ArithmeticTarget::A => manipulate_8bit_register!($self : a => $func => a),
+           ArithmeticTarget::B => manipulate_8bit_register!($self : b => $func => a),
+           ArithmeticTarget::C => manipulate_8bit_register!($self : c => $func => a),
+           ArithmeticTarget::D => manipulate_8bit_register!($self : d => $func => a),
+           ArithmeticTarget::E => manipulate_8bit_register!($self : e => $func => a),
+           ArithmeticTarget::H => manipulate_8bit_register!($self : h => $func => a),
+           ArithmeticTarget::L => manipulate_8bit_register!($self : l => $func => a),
            ArithmeticTarget::D8 => {
                let val = $self.read_next_byte();
                let result = $self.$func(val);
@@ -184,7 +184,7 @@ impl CPU {
             },
 
             Instruction::Add(target) => {
-                arithmetic_instruction!( target , self : add )
+                arithmetic_instruction!( target, self.add_without_carry => a)
             },
 
             Instruction::LD(load_type) => {
@@ -288,7 +288,12 @@ impl CPU {
                     (self.pc.wrapping_add(2),12)
                 }
 
-                
+                LoadType::ByteAddressFromA =>{
+                    let offset = self.read_next_byte() as u16;
+                    self.bus.write_byte(0xFF00 + offset, self.registers.a);
+                    (self.pc.wrapping_add(2),12)
+                }
+
                 
                 _ => {panic!("Other Load Types not Implemented Yet")}
                 }
@@ -329,9 +334,23 @@ impl CPU {
             Instruction::RET(function) => {
                 let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,
+                    JumpTarget::Zero => self.registers.f.zero,
+                    JumpTarget::NotCarry => !self.registers.f.carry,
+                    JumpTarget::Carry => self.registers.f.carry,
+                    JumpTarget::Always => true,
                     _=>{panic!("Yet to add more Conditions")}
                 };
-                self.return_(jump_condition)
+                
+                let next_pc = self.return_(jump_condition);
+
+                let cycles = if jump_condition && function == JumpTarget::Always{
+                    16
+                } else if jump_condition {
+                    20
+                } else {
+                    8
+                };
+                (next_pc,cycles)
             },
 
             Instruction::NOP => {
@@ -348,13 +367,13 @@ impl CPU {
         
     }
 
-    fn call(&mut self,should_jump: bool) -> u16{
+    fn call(&mut self,should_jump: bool) -> (u16,u8){
         let next_pc = self.pc.wrapping_add(3);
         if should_jump{
             self.push(next_pc);
-            self.read_next_word()
+            (self.read_next_word(),24)
         }else{
-            next_pc
+            (next_pc,12)
         }
     }
 

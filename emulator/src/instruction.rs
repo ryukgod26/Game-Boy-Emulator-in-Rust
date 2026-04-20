@@ -3,7 +3,7 @@ pub enum Instruction{
 }
 
 pub enum ArithmeticTarget{
-    A,B,C,D,E,H,L,
+    A,B,C,D,E,H,L,HLI,
 }
 
 pub enum JumpTest{
