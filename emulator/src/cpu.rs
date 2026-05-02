@@ -269,6 +269,7 @@ impl CPU {
                         }
                         Indirect::HLIndirectPlus => {
                             let hl = self.registers.get_hl();
+
                             self.registers.set_hl(hl.wrapping_add(1));
                             self.bus.write_byte(hl, a);
                         }
@@ -324,9 +325,12 @@ impl CPU {
             },
 
             Instruction::CALL(function) => {
-                let jump_condition = match function{
+                let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,
-                    _=> {panic!("Yet to Add more Conditions")},
+                    JumpTarget::Zero => self.registers.f.zero,
+                    JumpTarget::NotCarry => !self.registers.f.carry,
+                    JumpTarget::Carry => self.registers.f.carry,
+                    JumpTarget::Always => true
                 };
                 self.call(jump_condition)
             },
@@ -361,6 +365,11 @@ impl CPU {
                 self.is_halted = true;
                 (self.pc.wrapping_add(1),4)
             },
+
+            Instruction::RST(loc) => {
+                self.rst();
+                (loc.to_hex(),24)
+            }
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
         };
@@ -404,6 +413,12 @@ impl CPU {
         (msb << 8) | lsb
     }
 
+
+    #[inline(always)]
+    fn rst(&mut self){
+        self.push(self.pc.wrapping_add(1));
+    }
+
     fn add(&mut self,value: u8) -> u8{
         let(new_value, is_overflow) = self.registers.a.overflowing_add(value);
         self.registers.f.zero = new_value == 0;
@@ -445,6 +460,6 @@ impl CPU {
     }
 
     fn read_next_byte(&self) -> u8{
-        (self.bus.read_byte(self.pc + 1) as u8)
+        self.bus.read_byte(self.pc + 1) as u8
     }
 }

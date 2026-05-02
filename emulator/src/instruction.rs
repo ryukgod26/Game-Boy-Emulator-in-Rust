@@ -1,5 +1,5 @@
 pub enum Instruction{
-    Add(ArithmeticTarget),JP(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt,INC(IncDecTarget)
+    Add(ArithmeticTarget),JP(JumpTest),LD(LoadType),PUSH(StackTarget),POP(StackTarget),CALL(JumpTarget),RET(JumpTarget),NOP,Halt,INC(IncDecTarget),RST(RSTLocation)
 }
 
 pub enum ArithmeticTarget{
@@ -48,6 +48,33 @@ pub enum JumpTarget{
     NotCarry,
     Carry,
     Always
+}
+
+#[derive(Debug,Clone, Copy,PartialEq)]
+pub enum RSTLocation{
+    X00,
+    X08,
+    X10,
+    X18,
+    X20,
+    X28,
+    X30,
+    X38
+}
+
+impl RSTLocation {
+    pub fn to_hex(&self) -> u16{
+        match self {
+            RSTLocation::X00 => 0x00,
+            RSTLocation::X08 => 0x08,
+            RSTLocation::X10 => 0x10,
+            RSTLocation::X18 => 0x18,
+            RSTLocation::X20 => 0x20,
+            RSTLocation::X28 => 0x28,
+            RSTLocation::X30 => 0x30,
+            RSTLocation::X38 => 0x38
+        }
+    }
 }
 
 pub enum PrefixTarget{
