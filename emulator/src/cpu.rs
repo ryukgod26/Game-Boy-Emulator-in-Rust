@@ -1,3 +1,7 @@
+use std::result;
+
+use crate::ADDHLTarget;
+
 use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarget,LoadByteTarget,LoadType,LoadByteSource,JumpTarget,IncDecTarget,LoadWordTarget,Indirect};
 
 pub struct CPU{
@@ -186,6 +190,18 @@ impl CPU {
             Instruction::Add(target) => {
                 arithmetic_instruction!( target, self.add_without_carry => a)
             },
+
+            Instruction::ADDHL(target){
+                let value = match target{
+                    ADDHLTarget::BC => self.registers.get_bc(),
+                    ADDHLTarget::DE => self.registers.get_de(),
+                    ADDHLTarget::HL => self.registers.get_hl(),
+                    ADDHLTarget::SP => self.sp,
+                };
+                let result = self.add_hl(value);
+                self.registers.set_hl(result);
+                (self.pc.wrapping_add(1),8)
+            }
 
             Instruction::LD(load_type) => {
                 match load_type{
@@ -384,6 +400,19 @@ impl CPU {
         }else{
             (next_pc,12)
         }
+    }
+
+    #[inline(always)]
+    fn add_hl(&mut self, value: u16) -> u16{
+        let hl = self.registers.get_hl();
+        let (result,carry) = hl.overflowing_add(value);
+        self.registers.f.carry = carry;
+        self.registers.f.subtract = false;
+        // Half carry tests if we flow over the 11h bit which means does adding the two numbers together cause the 11th bit to flip
+        let mask = 0b111_1111_1111;
+        self.registers.f.half_carry = (value & mask) + (hl & mask) > mask;
+
+        result
     }
 
     fn return_(&mut self,should_jump: bool) -> u16{
