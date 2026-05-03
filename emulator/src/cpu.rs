@@ -203,6 +203,24 @@ impl CPU {
                 (self.pc.wrapping_add(1),8)
             }
 
+            Instruction::ADDSP => {
+                // First We are casting the next bit as signed 8 and then signed 16 and then
+                // unsigned 16
+                let value = self.read_next_byte() as i8 as i16 as u16;
+                let result = self.sp.wrapping_add(value);
+
+                //Half and Carry are Computed at nibble and byte level instead of byte and word level
+                let half_carry_mask = 0xF;
+                self.registers.f.carry = (self.sp & half_carry_mask) + (value & half_carry_mask ) > half_carry_mask;
+                let carry mask = 0xff;
+                self.registers.f.carry = (self.sp & carry_mask) + (value & carry_mask) > carry_mask;
+                self.registers.f.zero = false;
+                self.registers.f.subtract = false;
+
+                self.sp = result;
+                (self.pc.wrapping_add(2),16)
+            }
+
             Instruction::LD(load_type) => {
                 match load_type{
                 LoadType::Byte(target,source) => {
