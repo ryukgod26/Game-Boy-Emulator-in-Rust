@@ -601,6 +601,14 @@ impl CPU {
         result
     }
 
+    #[inline(always)]
+    fn complement(&mut self, value: u8) -> u8 {
+        let new_value = !value;
+        self.registers.f.subtract = true;
+        self.registers.f.half_carry = true;
+        new_value
+    }
+
     fn return_(&mut self,should_jump: bool) -> u16{
         if should_jump{
             self.pop()
