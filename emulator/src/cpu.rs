@@ -317,6 +317,16 @@ impl CPU {
                 arithmetic_instruction!(register, self.compare)
             }
 
+            Instruction::RETI => {
+                self.interupts_enabled = true;
+                (self.pop(),16)
+            }
+
+            Instruction::RST(loc) => {
+                self.rst();
+                (loc.to_hex(),24)
+            }
+
             Instruction::ADDSP => {
                 // First We are casting the next bit as signed 8 and then signed 16 and then
                 // unsigned 16

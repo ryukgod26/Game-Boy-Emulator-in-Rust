@@ -8,6 +8,8 @@ pub enum Instruction{
     POP(StackTarget),
     CALL(JumpTarget),
     RET(JumpTarget),
+    RETI,
+    RST(RSTLocation),
     NOP,
     Halt,
     INC(IncDecTarget),
@@ -38,7 +40,6 @@ pub enum Instruction{
     SRA(PrefixTarget),
     SLA(PrefixTarget),
     SWAP(PrefixTarget),
-
 
 }
 
@@ -108,6 +109,11 @@ pub enum JumpTarget{
     NotCarry,
     Carry,
     Always
+}
+
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum RSTLocation{
+    0
 }
 
 #[derive(Copy,Clone,Debug,PartialEq)]
