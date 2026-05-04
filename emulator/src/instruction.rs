@@ -22,7 +22,8 @@ pub enum Instruction{
     RLA,
     RRCA,
     RLCA,
-
+    CPL,
+    DAA,
 }
 
 pub enum ArithmeticTarget{

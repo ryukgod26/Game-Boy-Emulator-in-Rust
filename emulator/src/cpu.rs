@@ -416,6 +416,16 @@ impl CPU {
                 (self.pc.wrapping_add(1),4)
             }
 
+            Instruction::CPL => {
+                manipulate_8bit_register!(self: a => complement => a);
+                (self.pc.wrapping_add(1),4)
+            }
+
+            Instruction::DAA => {
+                manipulate_8bit_register!(self: a => decimal_adjust => a);
+                (self.pc.wrapping_add(1),4)
+            }
+
             Instruction::CALL(function) => {
                 let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,
@@ -555,6 +565,40 @@ impl CPU {
 
         new_value
 
+    }
+
+    #[inline(adjust)]
+    fn decimal_adjust(&mut self,value: u8) -> u8{
+        let flags = self.register.f;
+        let mut carry = false;
+
+        let result = if !flags.subtract{
+            let mut result = value;
+            if flags.carry || value > 0x99 {
+                carry = true;
+                result = result.wrapping_add(0x60);
+            }
+
+            if flags.half_carry || value & 0x0F > 0x09{
+                result = result.wrapping_add(0x06);
+            }
+            
+            result
+        } else if flags.carry {
+            carry = true;
+            let add = if flags.half_carry {0x9A} else {0xA0};
+            value.wrapping_add(add)
+        } else if flags.half_carry {
+            value.wrapping_add(0xFA)
+        } else{
+            value
+        };
+
+        self.registers.f.zero = result == 0;
+        self.registers.f.carry = carry;
+        self.registers.f.half_carry = false;
+
+        result
     }
 
     fn return_(&mut self,should_jump: bool) -> u16{
