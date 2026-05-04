@@ -14,7 +14,12 @@ pub enum Instruction{
     ADDSP,
     ADC(ArithmeticTarget),
     SBC(ArithmeticTarget),
-    
+    OR(ArithmeticTarget),
+    AND(ArithmeticTarget),
+    XOR(ArithmeticTarget),
+    CP(ArithmeticTarget),
+
+
 }
 
 pub enum ArithmeticTarget{
