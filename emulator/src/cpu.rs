@@ -486,6 +486,67 @@ impl CPU {
         self.rotate_right_through_carry(value,false)
     }
 
+    #[inline(always)]
+    fn rotate_right_through_carry_set_zero(&mut self,value: u8) -> u8{
+        self.rotate_right_through_carry(value,true)
+    }
+
+    #[inline(always)]
+    fn rotate_right_through_carry(&mut self,value: u8, set_zero: bool) -> u8{
+        let carry_bit = if self.registers.f.carry {1} else {0} << 7;
+        let new_value = carry_bit | (value >> 1);
+        self.registers.f.zero = set_zero && new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = value & 0b1 == 0b1;
+
+        new_value
+    }
+
+    #[inline(always)]
+    fn rotate_right_set_zero(&mut self, value: u8) -> u8{
+        self.rotate_right(value,true)
+    }
+
+    #[inline(always)]
+    fn rotate_right_retain_zero(&mut self, value: u8) -> u8{
+        self.rotate_right(value,false)
+    }
+
+    #[inline(always)]
+    fn rotate_left_set_zero(&mut self,value: u8) -> u8{
+        self.rotate_left(value,true)
+    }
+
+    #[inline(always)]
+    fn roatate_left_retain_zero(&mut self, value: u8) -> u8{
+        self.rotate_left(value,false)
+    }
+
+    #[inline(always)]
+    fn rotate_left(&mut self, value: u8, set_zero: bool) -> u8{
+        let carry = (value & 0x80) >> 7;
+        let new_value = value.rotate_left(1) | carry;
+        self.registers.f.zero = set_zero && new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = carry == 0x01;
+
+        new_value
+    }
+
+    #[inline(always)]
+    fn rotate_right(&mut self,value: u8, set_zero: bool) -> u8{
+        let new_value = value.rotate_right(1);
+        self.registers.f.zero = set_zeto && new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carty = false;
+        self.registers.f.carry = value & 0b1 == 0b1;
+
+        new_value
+
+    }
+
     fn return_(&mut self,should_jump: bool) -> u16{
         if should_jump{
             self.pop()
