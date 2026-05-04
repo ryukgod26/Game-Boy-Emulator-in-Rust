@@ -505,6 +505,14 @@ impl CPU {
                 prefix_instruction!(register, self.bit_test @ bit_position)
             }
 
+            Instruction::RES(register, bit_position) => {
+                prefix_instruction!(register, (self.reset_bit @ bit_position) => reg)
+            }
+
+            Instruction::SET(register,bit_position) => {
+                prefix_instruction!(register, (self.set_bit @ bit_position) => reg)
+            }
+
             Instruction::CALL(function) => {
                 let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,

@@ -26,6 +26,8 @@ pub enum Instruction{
     DAA,
 
     BIT(PrefixTarget, BitPosition),
+    RES(PrefixTarget, BitPosition),
+    SET(PrefixTarget, BitPosition),
 }
 
 pub enum ArithmeticTarget{
