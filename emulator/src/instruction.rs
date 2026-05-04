@@ -1,6 +1,8 @@
 pub enum Instruction{
     Add(ArithmeticTarget),
     JP(JumpTest),
+    JR(JumpTest),
+    JPI,
     LD(LoadType),
     PUSH(StackTarget),
     POP(StackTarget),
@@ -36,6 +38,8 @@ pub enum Instruction{
     SRA(PrefixTarget),
     SLA(PrefixTarget),
     SWAP(PrefixTarget),
+
+
 }
 
 pub enum ArithmeticTarget{

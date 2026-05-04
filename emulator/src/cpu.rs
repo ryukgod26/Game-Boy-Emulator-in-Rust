@@ -260,11 +260,26 @@ impl CPU {
                     JumpTest::Always => true,
                 };
                 self.jump(jump_condition)
-            },
+            }
+
+            Instruction::JR(target) => {
+                let jump_condition = match target{
+                    JumpTest::NotZero => !self.registers.f.zero,
+                    JumpTest::Zero => self.registers.f.zero,
+                    JumpTest::NotCarry => !self.registers.f.carry,
+                    JumpTest::Carry => self.registers.f.carry,
+                    JumpTest::Always => true,
+                };
+                self.jump_relative(jump_condition)
+            }
+
+            Instruction::JPI =>{
+                (self.registers.get_hl(),4)
+            }
 
             Instruction::Add(target) => {
                 arithmetic_instruction!( target, self.add_without_carry => a)
-            },
+            }
 
             Instruction::ADDHL(target){
                 let value = match target{
@@ -544,7 +559,6 @@ impl CPU {
             Instruction::SWAP(register) => {
                 prefix_instruction!(register, self.swap_nibbles => reg)
             }
-
 
             Instruction::CALL(function) => {
                 let jump_condition = match function {
@@ -862,7 +876,8 @@ impl CPU {
         };
         self.pc = next_pc;
     }
-
+    
+    #[inline(always)]
     fn jump(&self,condition:bool) -> (u16,u8) {
         if condition {
             // let least_significant_byte = self.bus.read_byte(self.pc +1) as u16;
@@ -872,6 +887,19 @@ impl CPU {
         } else{
             // self.pc.wrapping_add(3)
             (self.pc.wrapping_add(3),12)
+        }
+    }
+
+    #[inline(always)]
+    fn jump_relative(&self, should_jump: bool) -> (u16,u8) {
+        let next_step = self.pc.wrapping_add(2);
+        if should_jump {
+            let offset = self.read_next_byte() as i8;
+            let pc = next_step.wrapping_add(offset.abs() as u16);
+            (pc,16)
+            }else{
+                (next_step,12)
+        }
         }
     }
 
