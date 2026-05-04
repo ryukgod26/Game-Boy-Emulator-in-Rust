@@ -612,6 +612,16 @@ impl CPU {
                 (self.pc.wrapping_add(1),4)
             }
 
+            Instruction::DI => {
+                self.interupts_enabled = false;
+                (self.pc.wrapping_add(1),4)
+            }
+
+            Instruction::EI => {
+                self.interupts_enabled = true;
+                (self.pc.wrapping_add(1),4)
+            }
+
             Instruction::RST(loc) => {
                 self.rst();
                 (loc.to_hex(),24)

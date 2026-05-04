@@ -12,6 +12,8 @@ pub enum Instruction{
     RST(RSTLocation),
     NOP,
     Halt,
+    DI,
+    EI,
     INC(IncDecTarget),
     RST(RSTLocation),
     ADDHL(ADDHLTarget),
@@ -109,11 +111,6 @@ pub enum JumpTarget{
     NotCarry,
     Carry,
     Always
-}
-
-#[derive(Copy,Clone,Debug,PartialEq)]
-pub enum RSTLocation{
-    0
 }
 
 #[derive(Copy,Clone,Debug,PartialEq)]
