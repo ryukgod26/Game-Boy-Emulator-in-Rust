@@ -13,6 +13,7 @@ pub enum Instruction{
     ADDHL(ADDHLTarget),
     ADDSP,
     ADC(ArithmeticTarget),
+    SBC(ArithmeticTarget),
     
 }
 

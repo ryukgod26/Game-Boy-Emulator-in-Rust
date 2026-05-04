@@ -207,6 +207,10 @@ impl CPU {
                 arithmetic_instruction!(register, self.add_with_carry => a)
             }
 
+            Instruction::SBC(register) => {
+                arithmetic_instructiom!(register, self.sub_with_carry => a)
+            }
+
             Instruction::ADDSP => {
                 // First We are casting the next bit as signed 8 and then signed 16 and then
                 // unsigned 16
