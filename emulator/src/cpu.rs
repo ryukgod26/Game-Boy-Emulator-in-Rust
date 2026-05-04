@@ -733,6 +733,17 @@ impl CPU {
     }
 
     #[inline(always)]
+    fn swap_nibbles(&mut self, value: u8) -> u8 {
+        let new_value = ((value & 0xf) << 4) | ((value & 0xf0) >> 4); 
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carty = false;
+        self.registers.f.carry = false;
+
+        new_value
+    }
+
+    #[inline(always)]
     fn decimal_adjust(&mut self,value: u8) -> u8{
         let flags = self.register.f;
         let mut carry = false;
