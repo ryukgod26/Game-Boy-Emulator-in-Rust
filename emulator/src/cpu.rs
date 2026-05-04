@@ -529,6 +529,22 @@ impl CPU {
                 prefix_instruction!(register,self.rotate_right_set_zero => reg)
             }
 
+            Instruction::RLC(register) => {
+                prefix_instruction!(register, self.rotate_left_set_zero => reg)
+            }
+
+            Instruction::SRA(register) => {
+                prefix_instruction!(register, self.shift_right_arithmetic => reg)
+            }
+
+            Instruction::SLA(register) => {
+                prefix_instruction!(register, self.shift_left_arithmetic => reg)
+            }
+
+            Instruction::SWAP(register) => {
+                prefix_instruction!(register, self.swap_nibbles => reg)
+            }
+
 
             Instruction::CALL(function) => {
                 let jump_condition = match function {
@@ -693,7 +709,30 @@ impl CPU {
 
     }
 
-    #[inline(adjust)]
+    #[inline(always)]
+    fn shift_right_arithmetic(&mut self, value: u8) -> u8 {
+        let msb = value 0x80;
+        let new_value = msb | (value >> 1);
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = value & 0b1 == 0b1;
+
+        new_value
+    }
+
+    #[inline(always)]
+    fn shift_left_arithmetic(&mut self, value: u8) -> u8{
+        let new_value = value << 1;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = value & 0x80 == 0x80;
+
+        new_value
+    }
+
+    #[inline(always)]
     fn decimal_adjust(&mut self,value: u8) -> u8{
         let flags = self.register.f;
         let mut carry = false;

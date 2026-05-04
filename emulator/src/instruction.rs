@@ -32,6 +32,10 @@ pub enum Instruction{
     RR(PrefixTarget),
     RL(PrefixTarget),
     RRC(PrefixTarget),
+    RLC(PrefixTarget),
+    SRA(PrefixTarget),
+    SLA(PrefixTarget),
+    SWAP(PrefixTarget),
 }
 
 pub enum ArithmeticTarget{
