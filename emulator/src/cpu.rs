@@ -521,6 +521,15 @@ impl CPU {
                 prefix_instruction!(register, self.rotate_right_through_carry_set_zero => reg)
             }
 
+            Instruction::RL(register) => {
+                prefix_instruction!(register,self.rotate_left_through_carry_set_zero => reg)
+            }
+
+            Instruction::RRC(register) => {
+                prefix_instruction!(register,self.rotate_right_set_zero => reg)
+            }
+
+
             Instruction::CALL(function) => {
                 let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,
@@ -629,12 +638,34 @@ impl CPU {
     }
 
     #[inline(always)]
+    fn rotate_left_through_carry_set_zero(&mut self, value: u8) -> u8{
+        self.rotate_left_through_carry(value,true)
+    }
+
+    #[inline(always)]
+    fn rotate_left_through_carry_retain_zero(&mut self, value: u8) -> u8{
+        self.rotate_left_through_carry(value,false)
+    }
+
+    #[inline(always)]
+    fn rotate_left_through_carry(&mut self, value: u8, set_zero: bool) -> u8 {
+        let carry_bit = if self.registers.f.carry {1} else {0};
+        let new_value = (value << 1) | carry_bit;
+        self.registers.f.zero = set_zero && new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self registers.f.carry = (value & 0x80) == 0x80;
+
+        new_value
+    }
+
+    #[inline(always)]
     fn rotate_left_set_zero(&mut self,value: u8) -> u8{
         self.rotate_left(value,true)
     }
 
     #[inline(always)]
-    fn roatate_left_retain_zero(&mut self, value: u8) -> u8{
+    fn rotate_left_retain_zero(&mut self, value: u8) -> u8{
         self.rotate_left(value,false)
     }
 
@@ -702,6 +733,27 @@ impl CPU {
         self.registers.f.subtract = true;
         self.registers.f.half_carry = true;
         new_value
+    }
+
+    #[inline(always)]
+    fn bit_test(&mut self, value: u8, bit_position: BitPosition){
+        let bit_position: u8 = bit_position.into();
+        let result = (value >> bit_position) & 0b1;
+        self.registers.f.zero = result == 0;
+        self.regsiters.f.subtract = false;
+        self.registers.f.half_carry = true;
+    }
+
+    #[inline(always)]
+    fn reset_bit(&mut self, value: u8, bit_position: BitPosition) -> u8{
+        let bit_position: u8 = bit_position.into();
+        value & !(1 << bit_position)
+    }
+
+    #[inline(always)]
+    fn sey_bit(&mut self, value: u8, bit_position: BitPosition) -> u8{
+        let bit_position: u8 = bit_position.into();
+        value | (1 << bit_position)
     }
 
     fn return_(&mut self,should_jump: bool) -> u16{
