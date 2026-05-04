@@ -113,6 +113,81 @@ macro_rules! arithmetic_instruction{
     };
 }
 
+macro_rules! prefix_instruction{
+    ($register: ident,$self: ident.$work: ident => reg) => {
+        {
+        match $register {
+            PrefixTarget::A => manipulate_8bit_register!($self: a => $work => a),
+            PrefixTarget::B => manipulate_8bit_register!($self: b => $work => b),
+            PrefixTarget::C => manipulate_8bit_register!($self: c => $work => c),
+            PrefixTarget::D => manipulate_8bit_register!($self: d => $work => d),
+            PrefixTarget::E => manipulate_8bit_register!($self: e => $work => e),
+            PrefixTarget::H => manipulate_8bit_register!($self: h => $work => h),
+            PrefixTarget::L => manipulate_8bit_register!($self: l => $work => l),
+            PrefixTarget::HLI => {
+                let hl = $self.registers.get_hl();
+                let value = $self.bus.read_byte(hl);
+                let result = $self.$work(value);
+                $self.bus.write_byte(hl,result)
+            }
+        }
+        let cycles = match $register{
+            PrefixTarget::HLI => 16,
+            _                 => 8,
+        };
+        ($self.pc.wrapping_add(2),cycles)
+    }
+    };
+
+    ($register: ident, ($self: ident.$work: ident @ bit_position: ident) => reg) => {
+        {
+            match $register{
+                PrefixTarget::A => manipulate_8bit_register!($self: (a @ $bit_position) => $work => a),
+                PrefixTarget::B => manipulate_8bit_register!($self: (b @ $bit_position) => $work => b),
+                PrefixTarget::C => manipulate_8bit_register!($self: (c @ $bit_position) => $work => c),
+                PrefixTarget::D => manipulaye_8bit_register!($self: (d @ $bit_position) => $work => d),
+                PrefixTarget::E => manipulate_8bit_register!($self: (e @ $bit_position) => $work => e),
+                PrefixTarget::H => manipulate_8bit_register!($self: (h @ $bit_position) => $work => h),
+                PrefixTarget::L => manipulate_8bit_register!($self: (l @ $bit_position) => $work => l),
+                PrefixTarget::HLI => {
+                    let hl = $self.registers.get_hl();
+                    let value = $self.bus.read_byte(hl);
+                    let result = $self.$work(value, $bit_position);
+                    $self.bus.write_byte(hl,result);
+                }
+            }
+
+            let cycles = match $register{
+                PrefixTarget::HLI => 16,
+                _ => 8
+            };
+            ($self.pc.wrapping_add(2),cycles)
+        }
+    };
+
+    ($register: ident, $self: ident.$work: ident @ $bit_position: ident) => {
+        {
+            match $register{
+                PrefixTarget::A => manipulate_8bit_register!($self: (a @ $bit_position) => $work),
+                PrefixTarget::B => manipulate_8bit_register!($self: (b @ $bit_position) => $work),
+                PrefixTarget::C => manipulate_8bit_register!($self: (c @ $bit_position) => $work),
+                PrefixTarget::D => manipulate_8bit_register!($self: (d @ $bit_position) => $work),
+                PrefixTarget::E => manipulate_8bit_register!($self: (e @ $bit_position) => $work),
+                PrefixTarget::H => manipulate_8bit_register!($self: (h @ $bit_position) => $work),
+                PrefixTarget::L => manipulate_8bit_register!($self: (l @ $bit_position) => $work),
+                PrefixTarget::HLI => {
+                    let value = $self.bus.read_byte($self.registers.get_hl());
+                    $self.$work(value,$bit_position);
+                }
+            }
+            let cycles = match $register{
+                PrefixTarget::HLI => 16,
+                _ => 8
+            };
+            ($self.pc.wrapping_add(2),cycles)
+        }
+    };
+}
 
 impl CPU {
     pub fn new() -> Self{
