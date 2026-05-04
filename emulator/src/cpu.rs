@@ -203,6 +203,10 @@ impl CPU {
                 (self.pc.wrapping_add(1),8)
             }
 
+            Instruction::ADC(register) => {
+                arithmetic_instruction!(register, self.add_with_carry => a)
+            }
+
             Instruction::ADDSP => {
                 // First We are casting the next bit as signed 8 and then signed 16 and then
                 // unsigned 16
