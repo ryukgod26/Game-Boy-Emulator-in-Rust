@@ -426,6 +426,10 @@ impl CPU {
                 (self.pc.wrapping_add(1),4)
             }
 
+            Instruction::BIT(register,bit_position) => {
+                prefix_instruction!(register, self.bit_test @ bit_position)
+            }
+
             Instruction::CALL(function) => {
                 let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,
