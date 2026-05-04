@@ -396,6 +396,16 @@ impl CPU {
                 (self.pc.wrapping_add(1),4)
             }
 
+            Instruction::RRA => {
+                manipulate_8bit_register!(self : a => rotate_right_through_carry_retain_zero => a);
+                (self.pc.wrapping_add(1),4)
+            }
+
+            Instruction::RLA => {
+                manipulate_8bit_register(self: a => rotate_left_through_carry_retain_zero => a);
+                (self.pc.wrapping_add(1),4)
+            }
+
             Instruction::CALL(function) => {
                 let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,
@@ -469,6 +479,11 @@ impl CPU {
         self.registers.f.half_carry = (value & mask) + (hl & mask) > mask;
 
         result
+    }
+
+    #[inline(always)]
+    fn rotate_right_through_carry_retain_zero(&mut self,value: u8) -> u8{
+        self.rotate_right_through_carry(value,false)
     }
 
     fn return_(&mut self,should_jump: bool) -> u16{

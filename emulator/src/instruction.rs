@@ -17,7 +17,9 @@ pub enum Instruction{
     OR(ArithmeticTarget),
     AND(ArithmeticTarget),
     XOR(ArithmeticTarget),
-    CP(ArithmeticTarget),
+    CP(ArithmeticTarget),,
+    RRA,
+    RLA,
 
 
 }
