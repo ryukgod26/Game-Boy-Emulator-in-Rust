@@ -356,7 +356,7 @@ impl CPU {
                 
                 _ => {panic!("Other Load Types not Implemented Yet")}
                 }
-            },
+            }
 
             Instruction::PUSH(target) => {
                 let value = match target{
@@ -368,7 +368,7 @@ impl CPU {
                 };
                 self.push(value);
                 (self.pc.wrapping_add(1), 16)
-            },
+            }
 
             Instruction::POP(target) => {
                 let result = self.pop();
@@ -380,7 +380,21 @@ impl CPU {
                     _ => {panic!("Yet to Add Support for more Instruction in StackTarget")},
                 };
                 (self.pc.wrapping_add(1), 12)
-            },
+            }
+
+            Instruction::CCF => {
+                self.registers.f.subtract = false;
+                self.registers.f.half_carry = false;
+                self.regsiters.f.carry = !self.registers.f.carry;
+                (self.pc.wrapping_add(1),4)
+            }
+
+            Instruction::SCF => {
+                self.registers.f.subtract = false;
+                self.registers.f.half_carry = false;
+                self.registers.f.carry = true;
+                (self.pc.wrapping_add(1),4)
+            }
 
             Instruction::CALL(function) => {
                 let jump_condition = match function {
@@ -391,7 +405,7 @@ impl CPU {
                     JumpTarget::Always => true
                 };
                 self.call(jump_condition)
-            },
+            }
 
             Instruction::RET(function) => {
                 let jump_condition = match function {
@@ -413,16 +427,16 @@ impl CPU {
                     8
                 };
                 (next_pc,cycles)
-            },
+            }
 
             Instruction::NOP => {
                 (self.pc.wrapping_add(1), 4)
-            },
+            }
 
             Instruction::Halt => {
                 self.is_halted = true;
                 (self.pc.wrapping_add(1),4)
-            },
+            }
 
             Instruction::RST(loc) => {
                 self.rst();
