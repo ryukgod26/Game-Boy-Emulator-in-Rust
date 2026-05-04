@@ -513,6 +513,14 @@ impl CPU {
                 prefix_instruction!(register, (self.set_bit @ bit_position) => reg)
             }
 
+            Instruction::SRL(register) => {
+                prefix_instruction!(register, self.shift_right_logical => reg)
+            }
+
+            Instruction::RR(register) => {
+                prefix_instruction!(register, self.rotate_right_through_carry_set_zero => reg)
+            }
+
             Instruction::CALL(function) => {
                 let jump_condition = match function {
                     JumpTarget::NotZero => !self.registers.f.zero,

@@ -28,6 +28,8 @@ pub enum Instruction{
     BIT(PrefixTarget, BitPosition),
     RES(PrefixTarget, BitPosition),
     SET(PrefixTarget, BitPosition),
+    SRL(PrefixTarget),
+    RR(PrefixTarget),
 }
 
 pub enum ArithmeticTarget{
