@@ -20,7 +20,8 @@ pub enum Instruction{
     CP(ArithmeticTarget),,
     RRA,
     RLA,
-
+    RRCA,
+    RLCA,
 
 }
 

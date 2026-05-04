@@ -402,7 +402,17 @@ impl CPU {
             }
 
             Instruction::RLA => {
-                manipulate_8bit_register(self: a => rotate_left_through_carry_retain_zero => a);
+                manipulate_8bit_register!(self: a => rotate_left_through_carry_retain_zero => a);
+                (self.pc.wrapping_add(1),4)
+            }
+
+            Instruction::RRCA => {
+                manipulate_8bit_register!(self: a => rotate_right_retain_zero => a);
+                (self.pc.wrapping_add(1),4)
+            }
+
+            Instruction::RLCA =>{
+                manipulate_8bit_rehister!(self: a => rotate_left_retain_zero => a);
                 (self.pc.wrapping_add(1),4)
             }
 
