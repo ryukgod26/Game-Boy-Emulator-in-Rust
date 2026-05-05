@@ -31,6 +31,9 @@ pub enum Instruction{
     CPL,
     DAA,
 
+    CCF,
+    SCF,
+
     BIT(PrefixTarget, BitPosition),
     RES(PrefixTarget, BitPosition),
     SET(PrefixTarget, BitPosition),

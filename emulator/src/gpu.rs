@@ -1,4 +1,30 @@
+use atd;
+
 use super::{VRAM_BEGIN,VRAM_SIZE};
+
+const NUMBER_OF_OBJECTS = 40;
+
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum Color{
+    White = 255,
+    LightGray = 192,
+    DarkGray = 96,
+    Black = 0,
+}
+
+impl std::convert::From<u8> for Color{
+    fn from(n: u8) -> Self{
+        match n {
+            0 => Color::White,
+            1 => Color::LightGray,
+            2 => Color::DarkGray,
+            3 => Color::Black,
+            _ => panic!("Cannot Convert {} to Color", n)
+        }
+    }
+}
+
 pub struct GPU{
     vram: [u8; VRAM_SIZE],
     tile_set: [Tile; 384],
