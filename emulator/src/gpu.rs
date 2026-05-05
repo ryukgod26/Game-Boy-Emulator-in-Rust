@@ -25,6 +25,32 @@ impl std::convert::From<u8> for Color{
     }
 }
 
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum BackgroundColors(Color, Color, Color, Color);
+
+impl BackgroundColors{
+    fn new() -> Self{
+        BackgroundColors (
+            Color::White,
+            Color::LightGray,
+            Color::DarkGray,
+            Color::Black,
+            )
+    }
+}
+
+impl std::convert::From<u8> for BackgroundColors {
+    fn from(value: u8) -> Self {
+        BackgroundColor (
+            (value & 0b11).into(),
+            ((value >> 2) & 0b11).into(),
+            ((value >> 4) & 0b11).into(),
+            (value >> 6).into()
+            )
+    }
+}
+
 pub struct GPU{
     vram: [u8; VRAM_SIZE],
     tile_set: [Tile; 384],
