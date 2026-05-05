@@ -2,7 +2,7 @@ use atd;
 
 use super::{VRAM_BEGIN,VRAM_SIZE};
 
-const NUMBER_OF_OBJECTS = 40;
+const NUMBER_OF_OBJECTS: usize = 40;
 
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[derive(Copy,Clone,Debug,PartialEq)]
@@ -27,7 +27,7 @@ impl std::convert::From<u8> for Color{
 
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[derive(Copy,Clone,Debug,PartialEq)]
-pub enum BackgroundColors(Color, Color, Color, Color);
+pub struct BackgroundColors(Color, Color, Color, Color);
 
 impl BackgroundColors{
     fn new() -> Self{

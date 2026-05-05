@@ -336,7 +336,7 @@ impl CPU {
                 //Half and Carry are Computed at nibble and byte level instead of byte and word level
                 let half_carry_mask = 0xF;
                 self.registers.f.carry = (self.sp & half_carry_mask) + (value & half_carry_mask ) > half_carry_mask;
-                let carry mask = 0xff;
+                let carry_mask = 0xff;
                 self.registers.f.carry = (self.sp & carry_mask) + (value & carry_mask) > carry_mask;
                 self.registers.f.zero = false;
                 self.registers.f.subtract = false;
@@ -572,22 +572,22 @@ impl CPU {
 
             Instruction::CALL(function) => {
                 let jump_condition = match function {
-                    JumpTarget::NotZero => !self.registers.f.zero,
-                    JumpTarget::Zero => self.registers.f.zero,
-                    JumpTarget::NotCarry => !self.registers.f.carry,
-                    JumpTarget::Carry => self.registers.f.carry,
-                    JumpTarget::Always => true
+                    JumpTest::NotZero => !self.registers.f.zero,
+                    JumpTest::Zero => self.registers.f.zero,
+                    JumpTest::NotCarry => !self.registers.f.carry,
+                    JumpTest::Carry => self.registers.f.carry,
+                    JumpTest::Always => true
                 };
                 self.call(jump_condition)
             }
 
             Instruction::RET(function) => {
                 let jump_condition = match function {
-                    JumpTarget::NotZero => !self.registers.f.zero,
-                    JumpTarget::Zero => self.registers.f.zero,
-                    JumpTarget::NotCarry => !self.registers.f.carry,
-                    JumpTarget::Carry => self.registers.f.carry,
-                    JumpTarget::Always => true,
+                    JumpTest::NotZero => !self.registers.f.zero,
+                    JumpTest::Zero => self.registers.f.zero,
+                    JumpTest::NotCarry => !self.registers.f.carry,
+                    JumpTest::Carry => self.registers.f.carry,
+                    JumpTest::Always => true,
                     _=>{panic!("Yet to add more Conditions")}
                 };
                 
@@ -704,7 +704,7 @@ impl CPU {
         self.registers.f.zero = set_zero && new_value == 0;
         self.registers.f.subtract = false;
         self.registers.f.half_carry = false;
-        self registers.f.carry = (value & 0x80) == 0x80;
+        self.registers.f.carry = (value & 0x80) == 0x80;
 
         new_value
     }
@@ -745,7 +745,7 @@ impl CPU {
 
     #[inline(always)]
     fn shift_right_arithmetic(&mut self, value: u8) -> u8 {
-        let msb = value 0x80;
+        let msb = value & 0x80;
         let new_value = msb | (value >> 1);
         self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = false;
@@ -882,21 +882,62 @@ impl CPU {
         new_value
     }
 
-    fn step(&mut self){
-        let mut instruction_byte = self.bus.read_byte(self.pc);
+    fn step(&mut self) -> u8{
+         let mut instruction_byte = self.bus.read_byte(self.pc);
+
         let prefixed = instruction_byte == 0xCB;
-        if prefixed{
-            instruction_byte = self.bus.read_byte(self.pc + 1);
+        if prefixed {
+            instruction_byte = self.read_next_byte();
         }
-        let next_pc = if let Some(instruction) = Instruction::from_byte(instruction_byte,prefixed){
-            self.execute(instruction)
-        } else{
-            let description = format!("0x{}{:x}",if prefixed { "cb" } else {""},instruction_byte);
-            panic!("Cannot find Instruction found fot: 0x{:x}",instruction_byte);
-        };
-        self.pc = next_pc;
+
+        let (next_pc, mut cycles) =
+            if let Some(instruction) = Instruction::from_byte(instruction_byte, prefixed) {
+                self.execute(instruction)
+            } else {
+                let description = format!(
+                    "0x{}{:x}",
+                    if prefixed { "cb" } else { "" },
+                    instruction_byte
+                );
+                panic!(
+                    "0x{:x}: Unknown instruction found - {}",
+                    self.pc, description
+                )
+            };
+
+        self.bus.step(cycles);
+
+        if self.bus.has_interrupt() {
+            self.is_halted = false;
+        }
+        if !self.is_halted {
+            self.pc = next_pc;
+        }
+
+        let mut interrupted = false;
+        if self.interrupts_enabled {
+            if self.bus.interrupt_enable.vblank && self.bus.interrupt_flag.vblank {
+                interrupted = true;
+                self.bus.interrupt_flag.vblank = false;
+                self.interrupt(VBLANK_VECTOR)
+            }
+            if self.bus.interrupt_enable.lcdstat && self.bus.interrupt_flag.lcdstat {
+                interrupted = true;
+                self.bus.interrupt_flag.lcdstat = false;
+                self.interrupt(LCDSTAT_VECTOR)
+            }
+            if self.bus.interrupt_enable.timer && self.bus.interrupt_flag.timer {
+                interrupted = true;
+                self.bus.interrupt_flag.timer = false;
+                self.interrupt(TIMER_VECTOR)
+            }
+        }
+        if interrupted {
+            cycles += 12;
+        }
+        cycles
     }
-    
+
     #[inline(always)]
     fn jump(&self,condition:bool) -> (u16,u8) {
         if condition {
