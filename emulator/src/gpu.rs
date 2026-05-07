@@ -1,8 +1,15 @@
-use atd;
+use std;
 
 use super::{VRAM_BEGIN,VRAM_SIZE};
 
 const NUMBER_OF_OBJECTS: usize = 40;
+
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum BackgroundAndWindowDataSelect{
+    X8000,
+    X8800,
+}
 
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[derive(Copy,Clone,Debug,PartialEq)]
@@ -11,6 +18,40 @@ pub enum Color{
     LightGray = 192,
     DarkGray = 96,
     Black = 0,
+}
+
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum TileMap{
+    X9800,
+    X9C00,
+}
+
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum ObjectSize{
+    OS8X8,
+    OS8X16,
+}
+
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+#[derive(Copy,Clone,Debug,PartialEq)]
+pub enum Mode{
+    HorizontalBlank,
+    VerticalBlank,
+    OAMAccess,
+    VRAMAccess
+}
+
+impl std::convert::From<Mode> for u8{
+    fn from(value: u8) -> Self{
+        match value{
+            Mode::HorizontalBlank => 0,
+            Mode::VerticalBlank => 1,
+            Mode::OAMAccess => 2,
+            Mode::VRAMAccess,
+        }
+    }
 }
 
 impl std::convert::From<u8> for Color{
@@ -112,9 +153,10 @@ impl GPU{
     }
 }
 
-fn read_vram(&self,addr: usize) -> u8{
-    self.vram[addr]
-}
+
+    fn read_vram(&self,addr: usize) -> u8{
+        self.vram[addr]
+    }
 
 }
 
