@@ -265,6 +265,13 @@ impl GPU{
     }
 }
 
+    fn set_equal_lines_check(&mut self,request: &mut InterruptRequest){
+        let line_equals_line_check = self.line == self.line_check;
+        if line_equals_line_check && self.line_equals_line_check_interrupt_enabled{
+            request.add(InterruptRequest::LCDStat);
+        }
+        self.line_equals_line_check = self.line_equals_line_check;
+    }
 
     fn read_vram(&self,addr: usize) -> u8{
         self.vram[addr]
