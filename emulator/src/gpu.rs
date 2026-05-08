@@ -97,6 +97,7 @@ pub struct ObjectData{
     x: i16,
     y: i16,
     tile: u8,
+    palette: ObjectPalette,
     xflip: bool,
     yflip: bool,
     priority: bool,
@@ -108,10 +109,23 @@ impl Default for ObjectData{
             x: -16,
             y: -8,
             tile: Default::default(), 
+            palette: Default::default(),
             xflip: Default::default(), 
             yflip: Default::default(), 
             priority: Default::default()
          }
+    }
+}
+
+#[derive(Clone, Copy,Debug,PartialEq)]
+enum ObjectPalette{
+    Zero,
+    One
+}
+
+impl Default for ObjectPalette{
+    fn default() -> Self {
+        ObjectPalette::Zero
     }
 }
 
