@@ -164,6 +164,7 @@ pub struct Window{
     pub y: u8,
 }
 
+#[cfg_attr(feature="serialize", derive(Serialize))]
 pub struct GPU{
     #[cfg_attr(feature="serialize", serde(skip_serializing))]
     pub canvas_buffer: [u8; SCREEN_HEIGHT * SCREEN_WIDTH * 4],
@@ -233,7 +234,7 @@ const SCREEN_HEIGHT: usize = 144;
 impl GPU{
 
     pub fn new() -> Self{
-        GPU { vram: [0;VRAM_SIZE], tile_set: [Tile::new();384] }
+        GPU { canvas_buffer: (), tile_set: (), object_data: (), vram: (), oam: (), background_colors: (), viewport_x_offset: (), viewport_y_offset: (), lcd_display_enabled: (), window_display_enabled: (), background_display_enabled: (), object_display_enabled: (), line_equals_line_check_interrupt_enabled: (), oam_interrupt_enabled: (), vblank_interrupt_enabled: (), hblank_interrupt_enabled: (), line_check: (), line_equals_line_check: (), window_tile_map: (), background_tile_map: (), background_and_window_data_select: (), object_size: (), obj_0_color_1: (), obj_0_color_2: (), obj_0_color_3: (), obj_1_color_1: (), obj_1_color_2: (), obj_1_color_3: (), window: (), line: (), mode: (), cycles: () }
     }
 
     fn write_vram(&mut self, index: usize,value: u8){
@@ -267,6 +268,15 @@ impl GPU{
 
     fn read_vram(&self,addr: usize) -> u8{
         self.vram[addr]
+    }
+
+    fn tile_value_to_background_color(&self,tile_value: &TilePixelValue) -> Color{
+        match tile_value {
+            TilePixelValue::Zero => self.background_colors.0,
+            TilePixelValue::One => self.background_colors.1,
+            TilePixelValue::Two => self.background_colors.2,
+            TilePixelValue::Three => self.background_colors.3,
+        }
     }
 
 }
