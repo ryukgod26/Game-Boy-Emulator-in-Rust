@@ -44,12 +44,12 @@ pub enum Mode{
 }
 
 impl std::convert::From<Mode> for u8{
-    fn from(value: u8) -> Self{
+    fn from(value: Mode) -> u8{
         match value{
             Mode::HorizontalBlank => 0,
             Mode::VerticalBlank => 1,
             Mode::OAMAccess => 2,
-            Mode::VRAMAccess,
+            Mode::VRAMAccess => 3,
         }
     }
 }
@@ -92,6 +92,29 @@ impl std::convert::From<u8> for BackgroundColors {
     }
 }
 
+#[derive(Clone, Copy,PartialEq,Debug)]
+pub struct ObjectData{
+    x: i16,
+    y: i16,
+    tile: u8,
+    xflip: bool,
+    yflip: bool,
+    priority: bool,
+}
+
+impl Default for ObjectData{
+    fn default() -> Self {
+        ObjectData { 
+            x: -16,
+            y: -8,
+            tile: Default::default(), 
+            xflip: Default::default(), 
+            yflip: Default::default(), 
+            priority: Default::default()
+         }
+    }
+}
+
 pub struct GPU{
     vram: [u8; VRAM_SIZE],
     tile_set: [Tile; 384],
@@ -118,6 +141,9 @@ impl Default for TilePixelValue{
         TilePixelValue::Zero
     }
 }
+
+const SCREEN_WIDTH: usize = 160;
+const SCREEN_HEIGHT: usize = 144;
 
 impl GPU{
 
