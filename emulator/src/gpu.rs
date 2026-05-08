@@ -189,7 +189,7 @@ pub struct GPU{
     pub vblank_interrupt_enabled: bool,
     pub hblank_interrupt_enabled: bool,
     pub line_check: u8,
-    pub line_equals_line_check: u8,
+    pub line_equals_line_check: bool,
     pub window_tile_map: TileMap,
     pub background_tile_map: TileMap,
     pub background_and_window_data_select: BackgroundAndWindowDataSelect,
@@ -234,7 +234,39 @@ const SCREEN_HEIGHT: usize = 144;
 impl GPU{
 
     pub fn new() -> Self{
-        GPU { canvas_buffer: (), tile_set: (), object_data: (), vram: (), oam: (), background_colors: (), viewport_x_offset: (), viewport_y_offset: (), lcd_display_enabled: (), window_display_enabled: (), background_display_enabled: (), object_display_enabled: (), line_equals_line_check_interrupt_enabled: (), oam_interrupt_enabled: (), vblank_interrupt_enabled: (), hblank_interrupt_enabled: (), line_check: (), line_equals_line_check: (), window_tile_map: (), background_tile_map: (), background_and_window_data_select: (), object_size: (), obj_0_color_1: (), obj_0_color_2: (), obj_0_color_3: (), obj_1_color_1: (), obj_1_color_2: (), obj_1_color_3: (), window: (), line: (), mode: (), cycles: () }
+        GPU { canvas_buffer: [0; SCREEN_HEIGHT * SCREEN_WIDTH * 4],
+            tile_set: [empty_tile();384],
+            object_data: [ObjectData::default(); NUMBER_OF_OBJECTS],
+            vram: [0; VRAM_SIZE],
+            oam: [0; OAM_SIZE],
+            background_colors: BackgroundColors::new(),
+            viewport_x_offset: 0,
+            viewport_y_offset: 0,
+            lcd_display_enabled: false,
+            window_display_enabled: false,
+            background_display_enabled: false,
+            object_display_enabled: false,
+            line_equals_line_check_interrupt_enabled: false,
+            oam_interrupt_enabled: false,
+            vblank_interrupt_enabled: false,
+            hblank_interrupt_enabled: false,
+            line_check: 0,
+            line_equals_line_check: false,
+            window_tile_map: TileMap::X9800,
+            background_tile_map: TileMap::X9800,
+            background_and_window_data_select: BackgroundAndWindowDataSelect::X8800,
+            object_size: ObjectSize::OS8X8,
+            obj_0_color_1: Color::LightGray,
+            obj_0_color_2: Color::DarkGray,
+            obj_0_color_3: Color::Black,
+            obj_1_color_1: Color::LightGray,
+            obj_1_color_2: Color::DarkGray,
+            obj_1_color_3: Color::Black,
+            window: Window { x: 0, y: 0 },
+            line: 0,
+            mode: Mode::HorizontalBlank,
+            cycles: 0,
+        }
     }
 
     fn write_vram(&mut self, index: usize,value: u8){
