@@ -1,8 +1,10 @@
 use std;
 
-use super::{VRAM_BEGIN,VRAM_SIZE};
+use super::{VRAM_BEGIN,VRAM_SIZE,OAM_SIZE};
 
 const NUMBER_OF_OBJECTS: usize = 40;
+const SCREEN_WIDTH: usize = 160;
+const SCREEN_HEIGHT: usize = 144;
 
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[derive(Copy,Clone,Debug,PartialEq)]
@@ -156,9 +158,51 @@ impl Default for ObjectPalette{
     }
 }
 
+#[cfg_attr(feature="serialize", derive(Serialize))]
+pub struct Window{
+    pub x: u8,
+    pub y: u8,
+}
+
 pub struct GPU{
-    vram: [u8; VRAM_SIZE],
-    tile_set: [Tile; 384],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    pub canvas_buffer: [u8; SCREEN_HEIGHT * SCREEN_WIDTH * 4],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    pub tile_set: [Tile; 384],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    pub object_data: [ObjectData; NUMBER_OF_OBJECTS],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    pub vram: [u8; VRAM_SIZE],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    pub oam: [u8; OAM_SIZE],
+    
+    pub background_colors: BackgroundColors,
+    pub viewport_x_offset: u8,
+    pub viewport_y_offset: u8,
+    pub lcd_display_enabled: bool,
+    pub window_display_enabled: bool,
+    pub background_display_enabled: bool,
+    pub object_display_enabled: bool,
+    pub line_equals_line_check_interrupt_enabled: bool,
+    pub oam_interrupt_enabled: bool,
+    pub vblank_interrupt_enabled: bool,
+    pub hblank_interrupt_enabled: bool,
+    pub line_check: u8,
+    pub line_equals_line_check: u8,
+    pub window_tile_map: TileMap,
+    pub background_tile_map: TileMap,
+    pub background_and_window_data_select: BackgroundAndWindowDataSelect,
+    pub object_size: ObjectSize,
+    pub obj_0_color_1: Color,
+    pub obj_0_color_2: Color,
+    pub obj_0_color_3: Color,
+    pub obj_1_color_1: Color,
+    pub obj_1_color_2: Color,
+    pub obj_1_color_3: Color,
+    pub window: Window,
+    pub line: u8,
+    pub mode: Mode,
+    cycles: u16,
 }
 
 type TileRow = [TilePixelValue;8];
