@@ -92,6 +92,33 @@ impl std::convert::From<u8> for BackgroundColors {
     }
 }
 
+#[derive(PartialEq, Eq)]
+pub enum InterruptRequest{
+    None,
+    VBlank,
+    LCDStat,
+    Both,
+}
+
+impl InterruptRequest{
+    fn add(&mut self, other: InterruptRequest){
+        match self{
+            InterruptRequest::None => *self = other,
+            InterruptRequest::VBlank => {
+                if other == InterruptRequest::LCDStat{
+                    *self = InterruptRequest::Both
+                }
+            }
+            InterruptRequest::LCDStat => {
+                if other == InterruptRequest::VBlank{
+                    *self = InterruptRequest::Both
+                }
+            }
+            _ => {}
+        };
+    }
+}
+
 #[derive(Clone, Copy,PartialEq,Debug)]
 pub struct ObjectData{
     x: i16,
