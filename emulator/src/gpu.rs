@@ -270,6 +270,50 @@ impl GPU{
         self.vram[addr]
     }
 
+    pub fn tile_set_as_buffer(&self,outline_lines: bool) -> Vec<u8>{
+        let values_per_pixel = 4;
+        let tile_width = 8;
+        let tile_height = 8;
+        let width_in_tiles = 24;
+        let height_in_tiles = self.tile_set.len() / width_in_tiles;
+        let row_width = tile_width * width_in_tiles * values_per_pixel;
+        let mut data = vec![0; width_in_tiles * height_in_tiles * tile_height * tile_width * values_per_pixel];
+
+        for(tile_index, tile) in self.tile_set.iter().enumerate(){
+            let tile_row = tile_index / width_in_tiles;
+            let tile_column = tile_index % width_in_tiles;
+            let final_tile_row = tile_row == height_in_tiles -1;
+            let final_tile_column = tile_column == width_in_tiles - 1;
+
+            for(row_index, row) in tile.iter().enumerate(){
+                let pixel_row_index = (tile_row * tile_height) + row_index;
+                let start_of_canvas_row = pixel_row_index * row_width;
+                let on_tile_row_border = pixel_row_index % 8 ==0 ;
+                let start_of_column = tile_column * tile_width;
+                let final_pixel_row = final_tile_row && row_index == 7;
+                let mut index = start_of_canvas_row + (start_of_column * values_per_pixel);
+                
+                for(pixel_index,pixel) in row.iter().enumerate(){
+                    let on_tile_column_border = pixel_index == 0;
+                    let final_pixel_column = final_tile_column && pixel_index == 7;
+                    if outline_lines && (on_tile_row_border || on_tile_column_border || final_pixel_row || final_pixel_column){
+                        data[index] = 0;
+                        data[index + 1] = 0;
+                        data[index + 2] = 255;
+                    } else{
+                        let color = self.tile_value_to_background_color(pixel);
+                        data[index] = color as u8;
+                        data[index + 1] = color as u8;
+                        data[index + 2] = color as u8;
+                    }
+                    data[index + 3] = 255;
+                    index = index + values_per_pixel;
+                }
+            }
+        }
+        data
+    }
+
     fn tile_value_to_background_color(&self,tile_value: &TilePixelValue) -> Color{
         match tile_value {
             TilePixelValue::Zero => self.background_colors.0,
@@ -277,6 +321,10 @@ impl GPU{
             TilePixelValue::Two => self.background_colors.2,
             TilePixelValue::Three => self.background_colors.3,
         }
+    }
+
+    fn background_1(&self) -> &[u8]{
+        &self.vram[0x1800..0x1C00]
     }
 
 }
