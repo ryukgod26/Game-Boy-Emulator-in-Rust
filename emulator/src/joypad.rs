@@ -50,4 +50,12 @@ impl Joypad{
         let row_bits = bit_4 | bit_3 | bit_2 | bit_1;
         column_bit | row_bits
     }
+
+    fn reading_column_0(&self) -> bool{
+        self.column == Column::Zero
+    }
+
+    fn reading_column_1(&self) -> bool{
+        self.column == Column::One
+    }
 }
