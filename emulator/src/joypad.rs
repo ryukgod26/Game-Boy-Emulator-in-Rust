@@ -20,3 +20,19 @@ pub struct Joypad{
     pub right: bool,
     pub left: bool,
 }
+
+impl Joypad{
+    pub fn new() -> Self{
+        Joypad{
+            column: Column::Zero,
+            start: false,
+            select: false,
+            a: false,
+            b: false,
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+        }
+    }
+}
