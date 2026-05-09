@@ -77,8 +77,40 @@ pub struct MemoryBus{
 
 impl MemoryBus{
 
-    pub fn new() -> Self{
-        MemoryBus { memory: [0;0xFFFF], gpu: GPU::new() }
+    pub fn new(boot_rom_buffer: Option<Vec<u8>>, game_rom: Vec<u8>) -> Self{
+        let boot_rom = boot_rom_buffer.map(|boot_rom_buffer| {
+            if boot_rom_buffer.len() != BOOT_ROM_SIZE {
+                panic!("Supplied Boot rom in wrong size. {} bytes should be {} bytes",boot_rom_buffer.len(),BOOT_ROM_SIZE);
+            }
+            let mut boot_rom = [0; BOOT_ROM_SIZE];
+            boot_rom.copy_from_slice(&boot_rom_buffer);
+            boot_rom
+        });
+        let mut rom_bank_0 = [0; ROM_BANK_0_SIZE];
+        for i in 0..ROM_BANK_0_SIZE{
+            rom_bank_0[i] = game_rom[i];
+        }
+        let mut rom_bank_n = [0; ROM_BANK_N_SIZE];
+        for i in 0..ROM_BANK_N_SIZE{
+            rom_bank_n[i] = gane_rom[ROM_BANK_0_SIZE + i];
+        }
+        let mut divider = Timer::new(Frequency::F16384);
+        divider.on = true;
+
+        MemoryBus{
+            boot_rom,
+            rom_bank_0,
+            rom_bank_n,
+            external_ram: [0; EXTERNAL_RAM_SIZE],
+            working_ram: [0; WORKING_RAM_SIZE],
+            zero_page: [0; ZERO_PAGE_SIZE],
+            gpu: GPU::new(),
+            interrupt_enable: InterruptFlags::new(),
+            interrupt_flag: InterruptFlags::new(),
+            timer: Timer::new(Frequency::F4096),
+            divider,
+            joypad: Joypad::new(),
+        }
     }
 
     pub fn read_byte(&self,address: u16) ->u8{
