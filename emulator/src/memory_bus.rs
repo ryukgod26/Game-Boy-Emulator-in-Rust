@@ -51,9 +51,27 @@ pub const VRAM_END: usize = 0x9FFF;
 pub const VRAM_SIZE: usize = VRAM_END - VRAM_BEGIN + 1;
 
 
+#[cfg_attr(feature="serialize",derive(Serialize))]
 pub struct MemoryBus{
-    memory: [u8; 0xFFFF],
-    gpu: GPU,
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    boot_rom: Option<[u8; BOOT_ROM_SIZE]>,
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    rom_bank_0: [u8; ROM_BANK_0_SIZE],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    rom_bank_n: [u8; ROM_BANK_N_SIZE],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    external_ram: [u8; EXTERNAL_RAM_SIZE],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    working_ram: [u8; WORKING_RAM_SIZE],
+    #[cfg_attr(feature="serialize", serde(skip_serializing))]
+    zero_page: [u8; ZERO_PAGE_SIZE],
+
+    pub gpu: GPU,
+    pub interrupt_enable: InterruptFlags,
+    pub interrupt_flag: InterruptFlags,
+    timer: Timer,
+    divider: Timer,
+    pub joypad: Joypad,
 }
 
 
