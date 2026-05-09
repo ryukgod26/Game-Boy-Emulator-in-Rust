@@ -296,6 +296,73 @@ impl GPU{
         }
     }
 
+    pub fn step(&mut self, cycles: u8) -> IterruptRequest {
+        let mut request = InterruptRequest::None;
+
+        if !self.lcd_display_enabled {
+            return request;
+        }
+        self.cycles += cycles as u16;
+        let mode = self.mode;
+        match mode{
+            Mode::HorizontalBlank => {
+                if self.cycles >= 200{
+                    self.cycles = self.cycles % 200;
+                    self.line += 1;
+
+                    if self.line >= 144{
+                        self.mode = Mode::VerticalBlank;
+                        request.add(InterruptRequest::VBlank);
+                        if self.vblank_interrupt_enabled {
+                            request.add(InterruptRequest::LCDStat)
+                        }
+                    } else{
+                        self.mode = Mode::OAMAccess;
+                        if self.oam_interrupt_enabled{
+                            self.add(InterruptRequest::LCDStat)
+                        }
+                    }
+                    self.set_equal_lines_check(&mut request);
+                }
+            }
+
+            Mode::VerticalBlank => {
+                if self.cycles >= 456{
+                    self.cycles = self.cycles % 456;
+                    self.line += 1;
+
+                    if self.line == 154{
+                        self.mode = Mode::OAMAccess;
+                        self.line = 0;
+                        if self.oam_interrupt_enabled{
+                            request.add(InterruptRequest::LCDStat)
+                        }
+                    }
+                    self.set_equal_lines_check(&mut request);
+                }
+            }
+
+            Mode::OAMAccess => {
+                if self.cycles >= 80{
+                    self.cycles = self.cycles % 80;
+                    self.mode = Mode::VRAMAccess;
+                }
+            }
+
+            Mode::VRAMAccess => {
+                self.cycles >= 172{
+                    self.cycles = self.cycles % 172;
+                    if self.hblank_interrupt_enabled {
+                        request.add(InterruptRequest::LCDStat)
+                    }
+                    self.mode = Mode::HorizontalBlank;
+                    self.rwnder_scan_line()
+                }
+            }
+        }
+        request
+    }
+
     pub fn write_vram(&mut self, index: usize,value: u8){
         self.vram[index] = value;
 
