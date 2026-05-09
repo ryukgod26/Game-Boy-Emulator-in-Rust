@@ -269,7 +269,34 @@ impl GPU{
         }
     }
 
-    fn write_vram(&mut self, index: usize,value: u8){
+    pub fn write_oam(&mut self, index: usize, value: u8) {
+        self.oam[index] = value;
+        let object_index = index/4;
+
+        if object_index > NUMBER_OF_OBJECTS{
+            return;
+        }
+
+        let byte = index % 4;
+        let mut data = self.object_data.get_mut(object_index).unwrap();
+        match byte {
+            0 => data.y = (value as i16) - 0x10,
+            1 => data.x = (value as i16) - 0x8,
+            2 => data.tile = value,
+            _ => {
+                data.palette = if (value & 0x10) != 0 {
+                    ObjectPalette::One
+                } else{
+                    ObjectPalette::Zero
+                };
+                data.xflip = (value & 0x20) != 0;
+                data.yflip = (value & 0x40) != 0;
+                data.priority = (value & 0x80) == 0;
+            }
+        }
+    }
+
+    pub fn write_vram(&mut self, index: usize,value: u8){
         self.vram[index] = value;
 
         if index >= 0x1800 {return}
