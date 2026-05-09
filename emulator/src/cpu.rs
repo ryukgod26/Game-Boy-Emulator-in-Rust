@@ -86,30 +86,32 @@ macro_rules! arithmetic_instruction{
     };
 
     ($register: ident, $self: ident.$func: ident => a) => {
-       match $register{
-           ArithmeticTarget::A => manipulate_8bit_register!($self : a => $func => a),
-           ArithmeticTarget::B => manipulate_8bit_register!($self : b => $func => a),
-           ArithmeticTarget::C => manipulate_8bit_register!($self : c => $func => a),
-           ArithmeticTarget::D => manipulate_8bit_register!($self : d => $func => a),
-           ArithmeticTarget::E => manipulate_8bit_register!($self : e => $func => a),
-           ArithmeticTarget::H => manipulate_8bit_register!($self : h => $func => a),
-           ArithmeticTarget::L => manipulate_8bit_register!($self : l => $func => a),
-           ArithmeticTarget::D8 => {
-               let val = $self.read_next_byte();
-               let result = $self.$func(val);
-               $self.registers.a = result;
-           }
-           ArithmeticTarget::HLI => {
-               let val = $self.bus.read_byte($self.registers.get_hl());
-               let result = $self.$func(val);
-               $self.registers.a = result;
-           }
-       };
-       match $register{
-           ArithmeticTarget::D8 => ($self.pc.wrapping_add(2),8),
-           ArithmeticTarget::HLI => ($self.pc.wrapping_add(1),8),
-           _ => ($self.pc.wrapping_add(1),4)
-       }
+        {
+            match $register{
+                ArithmeticTarget::A => manipulate_8bit_register!($self : a => $func => a),
+                ArithmeticTarget::B => manipulate_8bit_register!($self : b => $func => a),
+                ArithmeticTarget::C => manipulate_8bit_register!($self : c => $func => a),
+                ArithmeticTarget::D => manipulate_8bit_register!($self : d => $func => a),
+                ArithmeticTarget::E => manipulate_8bit_register!($self : e => $func => a),
+                ArithmeticTarget::H => manipulate_8bit_register!($self : h => $func => a),
+                ArithmeticTarget::L => manipulate_8bit_register!($self : l => $func => a),
+                ArithmeticTarget::D8 => {
+                    let val = $self.read_next_byte();
+                    let result = $self.$func(val);
+                    $self.registers.a = result;
+                }
+                ArithmeticTarget::HLI => {
+                    let val = $self.bus.read_byte($self.registers.get_hl());
+                    let result = $self.$func(val);
+                    $self.registers.a = result;
+                }
+            };
+            match $register{
+                ArithmeticTarget::D8 => ($self.pc.wrapping_add(2),8),
+                ArithmeticTarget::HLI => ($self.pc.wrapping_add(1),8),
+                _ => ($self.pc.wrapping_add(1),4)
+            }
+        }
     };
 }
 
@@ -643,6 +645,33 @@ impl CPU {
     }
 
     #[inline(always)]
+    fn add_with_carry(&mut self, value: u8) -> u8{
+        self.add(value,true)
+    }
+
+    #[inline(always)]
+    fn add_without_carry(&mut self, value: u8) -> u8{
+        self.add(value, false)
+    }
+
+    #[inline(always)]
+    fn add(&mut self,value: u8, add_carry: bool) -> u8{
+        let additional_carry = if add_carry && self.registers.f.carry{
+            1
+        } else {
+            0
+        };
+        let (add,carry) = self.registers.a.overflowing_add(value);
+        let(add2, carry2) = add.overflowing_add(additional_carry);
+        self.registers.f.zero = add2 == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.carry = carry || carry2;
+        self.registers.f.half_carry = ((self.registers.a & 0xF) + (value & 0xF) + additional_carry) > 0xF;
+        add2
+    }
+
+
+    #[inline(always)]
     fn add_hl(&mut self, value: u16) -> u16{
         let hl = self.registers.get_hl();
         let (result,carry) = hl.overflowing_add(value);
@@ -871,15 +900,6 @@ impl CPU {
     #[inline(always)]
     fn rst(&mut self){
         self.push(self.pc.wrapping_add(1));
-    }
-
-    fn add(&mut self,value: u8) -> u8{
-        let(new_value, is_overflow) = self.registers.a.overflowing_add(value);
-        self.registers.f.zero = new_value == 0;
-        self.registers.f.subtract = false;
-        self.registers.f.half_carry = (self.registers.a & 0xF) + (value & 0xF) > 0xF;
-        self.registers.f.carry = is_overflow;
-        new_value
     }
 
     fn step(&mut self) -> u8{
