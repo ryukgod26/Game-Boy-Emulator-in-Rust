@@ -1,4 +1,6 @@
-use super::GPU;
+use crate::{
+    gpu::{BackgroundAndWindowDataSelect,InterruptRequest,ObjectSize,TileMap,GPU},
+};
 
 pub const BOOT_ROM_START: usize = 0x00;
 pub const BOOT_ROM_END: usize = 0xFF;
