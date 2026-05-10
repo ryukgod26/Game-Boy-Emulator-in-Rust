@@ -1,8 +1,8 @@
-use std::result;
-
-use crate::ADDHLTarget;
-
-use super::{Instruction,JumpTest,ArithmeticTarget,Registers,MemoryBus,StackTarget,LoadByteTarget,LoadType,LoadByteSource,JumpTarget,IncDecTarget,LoadWordTarget,Indirect};
+use crate::{
+    Instruction, JumpTest, ArithmeticTarget, Registers, MemoryBus, StackTarget,
+    LoadByteTarget, LoadType, LoadByteSource, JumpTarget, IncDecTarget, LoadWordTarget,
+    Indirect, BitPosition, ADDHLTarget, FlagsRegister
+};
 
 pub struct CPU{
     pub registers: Registers,
@@ -630,8 +630,7 @@ impl CPU {
             }
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
-        };
-        
+        }
     }
 
     fn call(&mut self,should_jump: bool) -> (u16,u8){
@@ -980,7 +979,6 @@ impl CPU {
             (pc,16)
             }else{
                 (next_step,12)
-        }
         }
     }
 

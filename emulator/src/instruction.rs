@@ -1,5 +1,6 @@
 pub enum Instruction{
-    Add(ArithmeticTarget),
+    ADD(ArithmeticTarget),
+    SUB(ArithmeticTarget),
     JP(JumpTest),
     JR(JumpTest),
     JPI,
@@ -15,7 +16,7 @@ pub enum Instruction{
     DI,
     EI,
     INC(IncDecTarget),
-    RST(RSTLocation),
+    DEC(IncDecTarget),
     ADDHL(ADDHLTarget),
     ADDSP,
     ADC(ArithmeticTarget),
@@ -49,7 +50,7 @@ pub enum Instruction{
 }
 
 pub enum ArithmeticTarget{
-    A,B,C,D,E,H,L,HLI,
+    A,B,C,D,E,H,L,HLI,D8,
 }
 
 pub enum JumpTest{
@@ -89,7 +90,7 @@ pub enum LoadByteSource{
 }
 
 pub enum LoadType{
-    Byte(LoadByteTarget,LoadByteSource), Word(LoadWordTarget), AFromIndirect(Indirect),IndirectFromA(Indirect),ByteAddressFromA,AFromByteAddress
+    Byte(LoadByteTarget,LoadByteSource), Word(LoadWordTarget), AFromIndirect(Indirect),IndirectFromA(Indirect),ByteAddressFromA,AFromByteAddress,
 }
 
 pub enum Indirect{
@@ -168,10 +169,6 @@ impl RSTLocation {
             RSTLocation::X38 => 0x38
         }
     }
-}
-
-pub enum PrefixTarget{
-    A,B,C,D,E,H,L
 }
 
 impl Instruction{
@@ -483,7 +480,7 @@ impl Instruction{
         }
     }
 
-    fn from_byte_not_prefixed(byte: u8) -> Option<Instruction> {
+    fn from_not_prefixed_byte(byte: u8) -> Option<Instruction> {
         match byte {
             0x3c => Some(Instruction::INC(IncDecTarget::A)),
             0x04 => Some(Instruction::INC(IncDecTarget::B)),
