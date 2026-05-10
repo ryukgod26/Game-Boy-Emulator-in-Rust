@@ -90,7 +90,7 @@ pub enum LoadByteSource{
 }
 
 pub enum LoadType{
-    Byte(LoadByteTarget,LoadByteSource), Word(LoadWordTarget), AFromIndirect(Indirect),IndirectFromA(Indirect),ByteAddressFromA,AFromByteAddress,
+    Byte(LoadByteTarget,LoadByteSource), Word(LoadWordTarget), AFromIndirect(Indirect),IndirectFromA(Indirect),ByteAddressFromA,AFromByteAddress,SPFromHL,HLFromSPN,
 }
 
 pub enum Indirect{

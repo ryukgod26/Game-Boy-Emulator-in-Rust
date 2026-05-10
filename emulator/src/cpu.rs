@@ -455,7 +455,22 @@ impl CPU {
                     (self.pc.wrapping_add(2),12)
                 }
 
-                
+                LoadType::SPFromHL => {
+                    self.sp = self.registers.get_hl();
+                    (self.pc.wrapping_add(1),8)
+                }
+
+                LoadType::HLFromSPN => {
+                    let value = self.read_next_byte() as i8 as i16 as u16;
+                    let result = self.pc.wrapping_add(value);
+                    self.registers.set_hl(result);
+                    self.registers.f.zero = false;
+                    self.registers.f.subtract = false;
+                    self.registers.f.half_carry = (self.sp & 0xF) + (value & 0xF) > 0xF;
+                    self.registers.f.carry = (self.sp & 0xFF) + (value & 0xFF) > 0xFF;
+                    (self.pc.wrapping_add(2),12)
+                }
+
                 _ => {panic!("Other Load Types not Implemented Yet")}
                 }
             }
