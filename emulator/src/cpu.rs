@@ -471,6 +471,14 @@ impl CPU {
                     (self.pc.wrapping_add(2),12)
                 }
 
+                LoadType::IndirectFromSP => {
+                    let addr = self.read_next_word();
+                    let sp = self.sp;
+                    self.bus.write_byte(addr, ((sp & 0xFF00) >> 8) as u8);
+                    self.bus.write_byte(addr.wrapping_add(1), ((sp & 0xFF00) >> 8) as u8);
+                    (self.pc.wrapping_add(3),20)
+                }
+
                 _ => {panic!("Other Load Types not Implemented Yet")}
                 }
             }
