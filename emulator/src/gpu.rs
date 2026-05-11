@@ -294,7 +294,7 @@ impl GPU{
         }
     }
 
-    pub fn step(&mut self, cycles: u8) -> IterruptRequest {
+    pub fn step(&mut self, cycles: u8) -> InterruptRequest {
         let mut request = InterruptRequest::None;
 
         if !self.lcd_display_enabled {

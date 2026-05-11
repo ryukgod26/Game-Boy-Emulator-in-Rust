@@ -10,6 +10,7 @@ pub struct CPU{
     sp: u16,
     pub bus: MemoryBus,
     is_halted: bool,
+    interupts_enabled: bool,
 }
 
 macro_rules! manipulate_8bit_register{
@@ -118,27 +119,27 @@ macro_rules! arithmetic_instruction{
 macro_rules! prefix_instruction{
     ($register: ident,$self: ident.$work: ident => reg) => {
         {
-        match $register {
-            PrefixTarget::A => manipulate_8bit_register!($self: a => $work => a),
-            PrefixTarget::B => manipulate_8bit_register!($self: b => $work => b),
-            PrefixTarget::C => manipulate_8bit_register!($self: c => $work => c),
-            PrefixTarget::D => manipulate_8bit_register!($self: d => $work => d),
-            PrefixTarget::E => manipulate_8bit_register!($self: e => $work => e),
-            PrefixTarget::H => manipulate_8bit_register!($self: h => $work => h),
-            PrefixTarget::L => manipulate_8bit_register!($self: l => $work => l),
-            PrefixTarget::HLI => {
-                let hl = $self.registers.get_hl();
-                let value = $self.bus.read_byte(hl);
-                let result = $self.$work(value);
-                $self.bus.write_byte(hl,result)
+            match $register {
+                PrefixTarget::A => manipulate_8bit_register!($self: a => $work => a),
+                PrefixTarget::B => manipulate_8bit_register!($self: b => $work => b),
+                PrefixTarget::C => manipulate_8bit_register!($self: c => $work => c),
+                PrefixTarget::D => manipulate_8bit_register!($self: d => $work => d),
+                PrefixTarget::E => manipulate_8bit_register!($self: e => $work => e),
+                PrefixTarget::H => manipulate_8bit_register!($self: h => $work => h),
+                PrefixTarget::L => manipulate_8bit_register!($self: l => $work => l),
+                PrefixTarget::HLI => {
+                    let hl = $self.registers.get_hl();
+                    let value = $self.bus.read_byte(hl);
+                    let result = $self.$work(value);
+                    $self.bus.write_byte(hl,result)
+                }
             }
+            let cycles = match $register{
+                PrefixTarget::HLI => 16,
+                _                 => 8,
+            };
+            ($self.pc.wrapping_add(2),cycles)
         }
-        let cycles = match $register{
-            PrefixTarget::HLI => 16,
-            _                 => 8,
-        };
-        ($self.pc.wrapping_add(2),cycles)
-    }
     };
 
     ($register: ident, ($self: ident.$work: ident @ $bit_position: ident) => reg) => {
@@ -192,13 +193,14 @@ macro_rules! prefix_instruction{
 }
 
 impl CPU {
-    pub fn new() -> Self{
+    pub fn new(boot_rom: Option<Vec<u8>>,game_rom: Vec<u8>) -> Self{
         CPU{
             registers: Registers::new(),
             pc: 0x0,
             sp: 0x00,
-            bus: MemoryBus::new(),
-            is_halted: false
+            bus: MemoryBus::new(boot_rom,game_rom),
+            is_halted: false,
+            interupts_enabled: true
         }
     }
 
@@ -230,9 +232,9 @@ impl CPU {
                     IncDecTarget::H => manipulate_8bit_register!(self: h => inc_8bit => h),
                     IncDecTarget::L => manipulate_8bit_register!(self: l => inc_8bit => l),
                     // IncDecTarget::AF => manipulate_16bit_register!(self: get_af => inc_16bit => set_af),
-                    IncDecTarget::BC => {manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc)}
-                    IncDecTarget::HL => {manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl)}
-                    IncDecTarget::DE => {manipulate_16bit_register!(self: get_de => inc_16bit => set_de)}
+                    IncDecTarget::BC => manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc),
+                    IncDecTarget::HL => manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl),
+                    IncDecTarget::DE => manipulate_16bit_register!(self: get_de => inc_16bit => set_de),
                     IncDecTarget::SP => {
                         let amount = self.sp;
                         let result = self.inc_16bit(amount);
