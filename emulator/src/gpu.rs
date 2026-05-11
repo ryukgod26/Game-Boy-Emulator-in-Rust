@@ -1,6 +1,6 @@
 use std;
 
-use crate::{VRAM_BEGIN,VRAM_SIZE,OAM_SIZE};
+use crate::memory_bus::{VRAM_BEGIN,VRAM_SIZE,OAM_SIZE};
 
 const NUMBER_OF_OBJECTS: usize = 40;
 const SCREEN_WIDTH: usize = 160;
@@ -85,7 +85,7 @@ impl BackgroundColors{
 
 impl std::convert::From<u8> for BackgroundColors {
     fn from(value: u8) -> Self {
-        BackgroundColor (
+        BackgroundColors (
             (value & 0b11).into(),
             ((value >> 2) & 0b11).into(),
             ((value >> 4) & 0b11).into(),
@@ -210,6 +210,7 @@ type TileRow = [TilePixelValue;8];
 type Tile = [TileRow;8];
 
 #[derive(Copy,Clone)]
+#[derive(PartialEq, Eq)]
 pub enum TilePixelValue{
     Zero,
     One,
@@ -317,7 +318,7 @@ impl GPU{
                     } else{
                         self.mode = Mode::OAMAccess;
                         if self.oam_interrupt_enabled{
-                            self.add(InterruptRequest::LCDStat)
+                            request.add(InterruptRequest::LCDStat)
                         }
                     }
                     self.set_equal_lines_check(&mut request);
@@ -348,13 +349,13 @@ impl GPU{
             }
 
             Mode::VRAMAccess => {
-                self.cycles >= 172{
+                if self.cycles >= 172{
                     self.cycles = self.cycles % 172;
                     if self.hblank_interrupt_enabled {
                         request.add(InterruptRequest::LCDStat)
                     }
                     self.mode = Mode::HorizontalBlank;
-                    self.rwnder_scan_line()
+                    self.render_scan_line()
                 }
             }
         }
@@ -410,7 +411,7 @@ impl GPU{
         let height_in_tiles = 32;
         let tile_width_in_pixels = 8;
         let tile_height_in_pixels = 8;
-        let values_per_pixels = 4;
+        let values_per_pixel = 4;
         let row_width_in_canvas_values = tile_width_in_pixels * width_in_tiles * values_per_pixel;
         let data_length = width_in_tiles * height_in_tiles * tile_width_in_pixels * tile_height_in_pixels * values_per_pixel;
         let mut data = vec![0; data_length];
@@ -423,47 +424,54 @@ impl GPU{
             let final_tile_column = tile_column == width_in_tiles - 1;
 
             for(row_index,row) in tile.iter().enumerate() {
-                let pixel_column_index = beginning_of_column + pixel_index;
-                let viewport_x_offset = self.viewport_x_offset as usize;
-                let viewport_y_offset = self.viewport_y_offset as usize;
-                let (screen_border_right, did_overflow_x) = self.viewport_x_offset.overflowing_add(SCREEN_WIDTH as u8);
-                let (screen_border_bottom, did_overflow_y) = self.viewport_y_offset.overflowing_add(SCREEN_HEIGHT as u8);
-                let is_inside_screen_horizontally = if did_overflow_x {
-                    pixel_column_index < (screen_border_right as usize) || pixel_column_index > viewport_x_offset
-                } else{
-                    pixel_column_index < (screen_border_right as usize) && pixel_column_index > viewport_x_offset
-                };
-                let is_on_horizontal_edge = viewport_y_offzet == pixel_row_index || pixel_row_index pixel_row_index == (screen_border_bottom as usize);
-                let on_screen_border_x = is_inside_screen_horizontally && is_on_horizontal_edge;
+                let pixel_row_index = (tile_row * tile_height_in_pixels) + row_index;
+                let beginning_of_canvas_row = pixel_row_index * row_width_in_canvas_values;
+                let beginning_of_column = tile_column * tile_width_in_pixels;
+                let final_pixel_row = final_tile_row && row_index == 7;
+                let mut index = beginning_of_canvas_row + (beginning_of_column * values_per_pixel);
+                for(pixel_index,pixel) in row.iter().enumerate(){
+                    let pixel_column_index = beginning_of_column + pixel_index;
+                    let viewport_x_offset = self.viewport_x_offset as usize;
+                    let viewport_y_offset = self.viewport_y_offset as usize;
+                    let (screen_border_right, did_overflow_x) = self.viewport_x_offset.overflowing_add(SCREEN_WIDTH as u8);
+                    let (screen_border_bottom, did_overflow_y) = self.viewport_y_offset.overflowing_add(SCREEN_HEIGHT as u8);
+                    let is_inside_screen_horizontally = if did_overflow_x {
+                        pixel_column_index < (screen_border_right as usize) || pixel_column_index > viewport_x_offset
+                    } else{
+                        pixel_column_index < (screen_border_right as usize) && pixel_column_index > viewport_x_offset
+                    };
+                    let is_on_horizontal_edge = viewport_y_offset == pixel_row_index || pixel_row_index == (screen_border_bottom as usize);
+                    let on_screen_border_x = is_inside_screen_horizontally && is_on_horizontal_edge;
 
-                let is_inside_screen_vertically = if did_overflow_y {
-                    pixel_row_index < (screen_border_bottom as usize) || pixel_row_index > viewport_y_offset
-                } else{
-                    pixel_row_index < (screen_border_bottom as usize) && pixel_row_index > viewport_y_offset
-                };
-                let is_on_vertical_edge = viewport_x_offset == pixel_column_index || pixel_column_index == (screen_border_right as usize);
-                let on_screen_border_y = is_inside_screen_vertically && is_on_vertical_edge;
-                let on_tile_border_x = pixel_row_index % 8 == 0;
-                let on_tile_border_y = pixel_column_index % 8 == 0;
-                let final_pixel_column = final_tile_column && pixel_index == 7;
+                    let is_inside_screen_vertically = if did_overflow_y {
+                        pixel_row_index < (screen_border_bottom as usize) || pixel_row_index > viewport_y_offset
+                    } else{
+                        pixel_row_index < (screen_border_bottom as usize) && pixel_row_index > viewport_y_offset
+                    };
+                    let is_on_vertical_edge = viewport_x_offset == pixel_column_index || pixel_column_index == (screen_border_right as usize);
+                    let on_screen_border_y = is_inside_screen_vertically && is_on_vertical_edge;
+                    let on_tile_border_x = pixel_row_index % 8 == 0;
+                    let on_tile_border_y = pixel_column_index % 8 == 0;
+                    let final_pixel_column = final_tile_column && pixel_index == 7;
 
-                if show_viewport && (on_screen_border_x || on_screen_border_y) {
-                    data[index] = 255;
-                    data[index +1 ] = 0;
-                    data[index + 2] = 0;
-                } else if outline_tiles && (on_tile_border_x || on_tile_border_y || final_pixel_row || final_pixel_column){
-                    data[index] = 0;
-                    data[index + 1] = 0;
-                    data[index + 2] = 255;
-                } else{
-                    let color = self.tile_value_to_background_color(pixel);
-                    data[index] = color as u8;
-                    data[index + 1] = color as u8;
-                    data[index + 2] = color as u8;
+                    if show_viewport && (on_screen_border_x || on_screen_border_y) {
+                        data[index] = 255;
+                        data[index +1 ] = 0;
+                        data[index + 2] = 0;
+                    } else if outline_tiles && (on_tile_border_x || on_tile_border_y || final_pixel_row || final_pixel_column){
+                        data[index] = 0;
+                        data[index + 1] = 0;
+                        data[index + 2] = 255;
+                    } else{
+                        let color = self.tile_value_to_background_color(pixel);
+                        data[index] = color as u8;
+                        data[index + 1] = color as u8;
+                        data[index + 2] = color as u8;
+                    }
+                    data[index + 3] = 255;
+
+                    index = index + values_per_pixel;
                 }
-                data[index + 3] = 255;
-
-                index = index + values_per_pixel;
             }
         }
         data
@@ -616,5 +624,6 @@ impl GPU{
             }
         }
     }
+
 }
 

@@ -281,7 +281,7 @@ impl CPU {
                 (self.registers.get_hl(),4)
             }
 
-            Instruction::Add(target) => {
+            Instruction::ADD(target) => {
                 arithmetic_instruction!( target, self.add_without_carry => a)
             }
 
@@ -658,6 +658,44 @@ impl CPU {
         }
     }
 
+    #[inline(always)]
+    fn or(&mut self,value: u8) -> u8{
+        let new_value = self.registers.a | value;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.carry = false;
+        self.registers.f.half_carry = false;
+        new_value
+    }
+
+    #[inline(always)]
+    fn and(&mut self,value: u8) -> u8{
+        let new_value = self.registers.a & value;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = false;
+        new_value
+    }
+
+    #[inline(always)]
+    fn xor(&mut self,value: u8) -> u8{
+        let new_value = self.registers.a ^ value;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = false;
+        new_value
+    }
+
+    #[inline(always)]
+    fn compare(&mut self,value: u8){
+        self.registers.f.zero = self.registers.a == value;
+        self.registers.f.subtract = true;
+        self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF);
+        self.registers.f.carry = self.registers.a < value;
+    }
+
     fn call(&mut self,should_jump: bool) -> (u16,u8){
         let next_pc = self.pc.wrapping_add(3);
         if should_jump{
@@ -672,7 +710,7 @@ impl CPU {
     fn add_with_carry(&mut self, value: u8) -> u8{
         self.add(value,true)
     }
-
+ 
     #[inline(always)]
     fn add_without_carry(&mut self, value: u8) -> u8{
         self.add(value, false)
@@ -693,7 +731,6 @@ impl CPU {
         self.registers.f.half_carry = ((self.registers.a & 0xF) + (value & 0xF) + additional_carry) > 0xF;
         add2
     }
-
 
     #[inline(always)]
     fn set_bit(&mut self, value: u8, bit_position: BitPosition) -> u8{
@@ -722,6 +759,34 @@ impl CPU {
         self.registers.f.half_carry = (value & mask) + (hl & mask) > mask;
 
         result
+    }
+
+
+    #[inline(always)]
+    fn sub_without_carry(&mut self,value: u8) -> u8{
+        self.sub(value,false)
+    }
+
+    #[inline(always)]
+    fn sub_with_carry(&mut self,value: u8) -> u8{
+        self.sub(value, true)
+    }
+
+    #[inline(always)]
+    fn sub(&mut self,value: u8, sub_carry: bool) -> u8{
+        let additional_carry = if sub_carry && self.registers.f.carry{
+            1
+        } else {
+            0
+        };
+        let (sub,carry) = self.registers.a.overflowing_sub(value);
+        let (sub2,carry2) = self.registers.a.overflowing_sub(additional_carry);
+
+        self.registers.f.zero = sub2 == 0;
+        self.registers.f.subtract = true;
+        self.registers.f.carry = carry | carry2;
+        self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF) + additional_carry;
+        sub2
     }
 
     #[inline(always)]
