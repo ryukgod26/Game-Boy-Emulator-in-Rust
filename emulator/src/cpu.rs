@@ -141,7 +141,7 @@ macro_rules! prefix_instruction{
     }
     };
 
-    ($register: ident, ($self: ident.$work: ident @ bit_position: ident) => reg) => {
+    ($register: ident, ($self: ident.$work: ident @ $bit_position: ident) => reg) => {
         {
             match $register{
                 PrefixTarget::A => manipulate_8bit_register!($self: (a @ $bit_position) => $work => a),
@@ -692,6 +692,22 @@ impl CPU {
         add2
     }
 
+
+    #[inline(always)]
+    fn set_bit(&mut self, value: u8, bit_position: BitPosition) -> u8{
+        let bit_position: u8 = bit_position.into();
+        value | (1 << bit_position)
+    }
+
+    #[inline(always)]
+    fn shift_right_logical(&mut self, value: u8) -> u8{
+        let new_value = value >> 1;
+        self.registers.f.zero = new_value == 0;
+        self.registers.f.subtract = false;
+        self.registers.f.half_carry = false;
+        self.registers.f.carry = value & 0b1 == 0b1;
+        new_value
+    }
 
     #[inline(always)]
     fn add_hl(&mut self, value: u16) -> u16{

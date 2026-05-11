@@ -31,6 +31,7 @@ pub enum Instruction{
     RLCA,
     CPL,
     DAA,
+    HALT,
 
     CCF,
     SCF,

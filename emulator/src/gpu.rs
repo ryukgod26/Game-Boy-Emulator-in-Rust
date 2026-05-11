@@ -1,6 +1,6 @@
 use std;
 
-use super::{VRAM_BEGIN,VRAM_SIZE,OAM_SIZE};
+use crate::{VRAM_BEGIN,VRAM_SIZE,OAM_SIZE};
 
 const NUMBER_OF_OBJECTS: usize = 40;
 const SCREEN_WIDTH: usize = 160;
@@ -228,8 +228,6 @@ impl Default for TilePixelValue{
     }
 }
 
-const SCREEN_WIDTH: usize = 160;
-const SCREEN_HEIGHT: usize = 144;
 
 impl GPU{
 
