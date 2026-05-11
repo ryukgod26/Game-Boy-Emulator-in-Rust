@@ -1,10 +1,8 @@
-use crate::{
-    gpu::{BackgroundAndWindowDataSelect,InterruptRequest,ObjectSize,TileMap,GPU},
-    utils::bit,
-    joypad::{self,Joypad},
-    timer::{Frequency,Timer},
-    interrupt_flags::InterruptFlags
-};
+use crate::gpu::{BackgroundAndWindowDataSelect,InterruptRequest,ObjectSize,TileMap,GPU};
+use crate::utils::bit;
+use crate::joypad::{self,Joypad};
+use crate::timer::{Frequency,Timer};
+use crate::interrupt_flags::InterruptFlags;
 
 pub const BOOT_ROM_START: usize = 0x00;
 pub const BOOT_ROM_END: usize = 0xFF;

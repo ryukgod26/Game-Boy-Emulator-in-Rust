@@ -1,8 +1,10 @@
 use crate::{
-    Instruction, JumpTest, ArithmeticTarget, Registers, MemoryBus, StackTarget,
-    LoadByteTarget, LoadType, LoadByteSource, JumpTarget, IncDecTarget, LoadWordTarget,
-    Indirect, BitPosition, ADDHLTarget, FlagsRegister
+    Instruction, JumpTest, ArithmeticTarget, Registers, StackTarget,
+    LoadByteTarget, LoadType, LoadByteSource, IncDecTarget, LoadWordTarget,
+    Indirect, BitPosition, ADDHLTarget, PrefixTarget
 };
+
+use crate::memory_bus::{TIMER_VECTOR,VBLANK_VECTOR,LCDSTAT_VECTOR,MemoryBus};
 
 pub struct CPU{
     pub registers: Registers,
@@ -10,7 +12,7 @@ pub struct CPU{
     sp: u16,
     pub bus: MemoryBus,
     is_halted: bool,
-    interupts_enabled: bool,
+    interrupts_enabled: bool,
 }
 
 macro_rules! manipulate_8bit_register{
@@ -22,9 +24,9 @@ macro_rules! manipulate_8bit_register{
         }
     };
 
-    ($self: ident : ($register: ident @ bit_position ) => $func: ident => $setter: ident) => {
+    ($self: ident : ($register: ident @ $bit_position: ident ) => $func: ident => $setter: ident) => {
         {
-            let result = manipulate_8bit_register!($self: ($register @ bit_position) => $func);
+            let result = manipulate_8bit_register!($self: ($register @ $bit_position) => $func);
             $self.registers.$setter = result;
         }
     };
@@ -32,7 +34,7 @@ macro_rules! manipulate_8bit_register{
     ($self: ident : $reg: ident => $func: ident => $_flag_reg: ident) => {
         {
             let val = $self.registers.$reg;
-            let result = $func(val);
+            let result = $self.$func(val);
             $self.registers.$reg = result;
             $self.pc.wrapping_add(1)
         }
@@ -61,13 +63,13 @@ macro_rules! arithmetic_instruction{
     ($register: ident, $self: ident.$func: ident) =>{
         {
             match $register{
-                ArithmeticTarget::A => manipulate_8bit_register!($self : a => $work),
-                ArithmeticTarget::B => manipulate_8bit_register!($self : b => $func),
-                ArithmeticTarget::C => manipulate_8bit_register!($self : c => $func),
-                ArithmeticTarget::D => manipulate_8bit_register!($self : d => $func),
-                ArithmeticTarget::E => manipulate_8bit_register!($self : e => $func),
-                ArithmeticTarget::H => manipulate_8bit_register!($self : h => $func),
-                ArithmeticTarget::L => manipulate_8bit_register!($self : l => $func),
+                ArithmeticTarget::A => { manipulate_8bit_register!($self : a => $func); },
+                ArithmeticTarget::B => { manipulate_8bit_register!($self : b => $func); },
+                ArithmeticTarget::C => { manipulate_8bit_register!($self : c => $func); },
+                ArithmeticTarget::D => { manipulate_8bit_register!($self : d => $func); },
+                ArithmeticTarget::E => { manipulate_8bit_register!($self : e => $func); },
+                ArithmeticTarget::H => { manipulate_8bit_register!($self : h => $func); },
+                ArithmeticTarget::L => { manipulate_8bit_register!($self : l => $func); },
                 ArithmeticTarget::D8 => {
                     let value = $self.read_next_byte();
                     $self.$func(value);
@@ -89,13 +91,13 @@ macro_rules! arithmetic_instruction{
     ($register: ident, $self: ident.$func: ident => a) => {
         {
             match $register{
-                ArithmeticTarget::A => manipulate_8bit_register!($self : a => $func => a),
-                ArithmeticTarget::B => manipulate_8bit_register!($self : b => $func => a),
-                ArithmeticTarget::C => manipulate_8bit_register!($self : c => $func => a),
-                ArithmeticTarget::D => manipulate_8bit_register!($self : d => $func => a),
-                ArithmeticTarget::E => manipulate_8bit_register!($self : e => $func => a),
-                ArithmeticTarget::H => manipulate_8bit_register!($self : h => $func => a),
-                ArithmeticTarget::L => manipulate_8bit_register!($self : l => $func => a),
+                ArithmeticTarget::A => { manipulate_8bit_register!($self : a => $func => a); },
+                ArithmeticTarget::B => { manipulate_8bit_register!($self : b => $func => a); },
+                ArithmeticTarget::C => { manipulate_8bit_register!($self : c => $func => a); },
+                ArithmeticTarget::D => { manipulate_8bit_register!($self : d => $func => a); },
+                ArithmeticTarget::E => { manipulate_8bit_register!($self : e => $func => a); },
+                ArithmeticTarget::H => { manipulate_8bit_register!($self : h => $func => a); },
+                ArithmeticTarget::L => { manipulate_8bit_register!($self : l => $func => a); },
                 ArithmeticTarget::D8 => {
                     let val = $self.read_next_byte();
                     let result = $self.$func(val);
@@ -120,20 +122,20 @@ macro_rules! prefix_instruction{
     ($register: ident,$self: ident.$work: ident => reg) => {
         {
             match $register {
-                PrefixTarget::A => manipulate_8bit_register!($self: a => $work => a),
-                PrefixTarget::B => manipulate_8bit_register!($self: b => $work => b),
-                PrefixTarget::C => manipulate_8bit_register!($self: c => $work => c),
-                PrefixTarget::D => manipulate_8bit_register!($self: d => $work => d),
-                PrefixTarget::E => manipulate_8bit_register!($self: e => $work => e),
-                PrefixTarget::H => manipulate_8bit_register!($self: h => $work => h),
-                PrefixTarget::L => manipulate_8bit_register!($self: l => $work => l),
+                PrefixTarget::A => { manipulate_8bit_register!($self: a => $work => a); },
+                PrefixTarget::B => { manipulate_8bit_register!($self: b => $work => b); },
+                PrefixTarget::C => { manipulate_8bit_register!($self: c => $work => c); },
+                PrefixTarget::D => { manipulate_8bit_register!($self: d => $work => d); },
+                PrefixTarget::E => { manipulate_8bit_register!($self: e => $work => e); },
+                PrefixTarget::H => { manipulate_8bit_register!($self: h => $work => h); },
+                PrefixTarget::L => { manipulate_8bit_register!($self: l => $work => l); },
                 PrefixTarget::HLI => {
                     let hl = $self.registers.get_hl();
                     let value = $self.bus.read_byte(hl);
                     let result = $self.$work(value);
-                    $self.bus.write_byte(hl,result)
+                    $self.bus.write_byte(hl,result);
                 }
-            }
+            };
             let cycles = match $register{
                 PrefixTarget::HLI => 16,
                 _                 => 8,
@@ -145,20 +147,20 @@ macro_rules! prefix_instruction{
     ($register: ident, ($self: ident.$work: ident @ $bit_position: ident) => reg) => {
         {
             match $register{
-                PrefixTarget::A => manipulate_8bit_register!($self: (a @ $bit_position) => $work => a),
-                PrefixTarget::B => manipulate_8bit_register!($self: (b @ $bit_position) => $work => b),
-                PrefixTarget::C => manipulate_8bit_register!($self: (c @ $bit_position) => $work => c),
-                PrefixTarget::D => manipulaye_8bit_register!($self: (d @ $bit_position) => $work => d),
-                PrefixTarget::E => manipulate_8bit_register!($self: (e @ $bit_position) => $work => e),
-                PrefixTarget::H => manipulate_8bit_register!($self: (h @ $bit_position) => $work => h),
-                PrefixTarget::L => manipulate_8bit_register!($self: (l @ $bit_position) => $work => l),
+                PrefixTarget::A => { manipulate_8bit_register!($self: (a @ $bit_position) => $work => a); },
+                PrefixTarget::B => { manipulate_8bit_register!($self: (b @ $bit_position) => $work => b); },
+                PrefixTarget::C => { manipulate_8bit_register!($self: (c @ $bit_position) => $work => c); },
+                PrefixTarget::D => { manipulate_8bit_register!($self: (d @ $bit_position) => $work => d); },
+                PrefixTarget::E => { manipulate_8bit_register!($self: (e @ $bit_position) => $work => e); },
+                PrefixTarget::H => { manipulate_8bit_register!($self: (h @ $bit_position) => $work => h); },
+                PrefixTarget::L => { manipulate_8bit_register!($self: (l @ $bit_position) => $work => l); },
                 PrefixTarget::HLI => {
                     let hl = $self.registers.get_hl();
                     let value = $self.bus.read_byte(hl);
                     let result = $self.$work(value, $bit_position);
                     $self.bus.write_byte(hl,result);
                 }
-            }
+            };
 
             let cycles = match $register{
                 PrefixTarget::HLI => 16,
@@ -171,18 +173,18 @@ macro_rules! prefix_instruction{
     ($register: ident, $self: ident.$work: ident @ $bit_position: ident) => {
         {
             match $register{
-                PrefixTarget::A => manipulate_8bit_register!($self: (a @ $bit_position) => $work),
-                PrefixTarget::B => manipulate_8bit_register!($self: (b @ $bit_position) => $work),
-                PrefixTarget::C => manipulate_8bit_register!($self: (c @ $bit_position) => $work),
-                PrefixTarget::D => manipulate_8bit_register!($self: (d @ $bit_position) => $work),
-                PrefixTarget::E => manipulate_8bit_register!($self: (e @ $bit_position) => $work),
-                PrefixTarget::H => manipulate_8bit_register!($self: (h @ $bit_position) => $work),
-                PrefixTarget::L => manipulate_8bit_register!($self: (l @ $bit_position) => $work),
+                PrefixTarget::A => { manipulate_8bit_register!($self: (a @ $bit_position) => $work); },
+                PrefixTarget::B => { manipulate_8bit_register!($self: (b @ $bit_position) => $work); },
+                PrefixTarget::C => { manipulate_8bit_register!($self: (c @ $bit_position) => $work); },
+                PrefixTarget::D => { manipulate_8bit_register!($self: (d @ $bit_position) => $work); },
+                PrefixTarget::E => { manipulate_8bit_register!($self: (e @ $bit_position) => $work); },
+                PrefixTarget::H => { manipulate_8bit_register!($self: (h @ $bit_position) => $work); },
+                PrefixTarget::L => { manipulate_8bit_register!($self: (l @ $bit_position) => $work); },
                 PrefixTarget::HLI => {
                     let value = $self.bus.read_byte($self.registers.get_hl());
                     $self.$work(value,$bit_position);
                 }
-            }
+            };
             let cycles = match $register{
                 PrefixTarget::HLI => 16,
                 _ => 8
@@ -200,7 +202,7 @@ impl CPU {
             sp: 0x00,
             bus: MemoryBus::new(boot_rom,game_rom),
             is_halted: false,
-            interupts_enabled: true
+            interrupts_enabled: true
         }
     }
 
@@ -224,17 +226,17 @@ impl CPU {
 
             Instruction::INC(target) =>{
                 match target{
-                    IncDecTarget::A => manipulate_8bit_register!(self: a => inc_8bit => a),
-                    IncDecTarget::B => manipulate_8bit_register!(self: b => inc_8bit => b),
-                    IncDecTarget::C => manipulate_8bit_register!(self: c => inc_8bit => c),
-                    IncDecTarget::D => manipulate_8bit_register!(self: d => inc_8bit => d),
-                    IncDecTarget::E => manipulate_8bit_register!(self: e => inc_8bit => e),
-                    IncDecTarget::H => manipulate_8bit_register!(self: h => inc_8bit => h),
-                    IncDecTarget::L => manipulate_8bit_register!(self: l => inc_8bit => l),
+                    IncDecTarget::A => { manipulate_8bit_register!(self: a => inc_8bit => a); },
+                    IncDecTarget::B => { manipulate_8bit_register!(self: b => inc_8bit => b); },
+                    IncDecTarget::C => { manipulate_8bit_register!(self: c => inc_8bit => c); },
+                    IncDecTarget::D => { manipulate_8bit_register!(self: d => inc_8bit => d); },
+                    IncDecTarget::E => { manipulate_8bit_register!(self: e => inc_8bit => e); },
+                    IncDecTarget::H => { manipulate_8bit_register!(self: h => inc_8bit => h); },
+                    IncDecTarget::L => { manipulate_8bit_register!(self: l => inc_8bit => l); },
                     // IncDecTarget::AF => manipulate_16bit_register!(self: get_af => inc_16bit => set_af),
-                    IncDecTarget::BC => manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc),
-                    IncDecTarget::HL => manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl),
-                    IncDecTarget::DE => manipulate_16bit_register!(self: get_de => inc_16bit => set_de),
+                    IncDecTarget::BC => { manipulate_16bit_register!(self: get_bc => inc_16bit => set_bc); },
+                    IncDecTarget::HL => { manipulate_16bit_register!(self: get_hl => inc_16bit => set_hl); },
+                    IncDecTarget::DE => { manipulate_16bit_register!(self: get_de => inc_16bit => set_de); },
                     IncDecTarget::SP => {
                         let amount = self.sp;
                         let result = self.inc_16bit(amount);
@@ -285,7 +287,7 @@ impl CPU {
                 arithmetic_instruction!( target, self.add_without_carry => a)
             }
 
-            Instruction::ADDHL(target){
+            Instruction::ADDHL(target) => {
                 let value = match target{
                     ADDHLTarget::BC => self.registers.get_bc(),
                     ADDHLTarget::DE => self.registers.get_de(),
@@ -302,7 +304,7 @@ impl CPU {
             }
 
             Instruction::SBC(register) => {
-                arithmetic_instructiom!(register, self.sub_with_carry => a)
+                arithmetic_instruction!(register, self.sub_with_carry => a)
             }
 
             Instruction::AND(register) => {
@@ -317,12 +319,12 @@ impl CPU {
                 arithmetic_instruction!(register, self.xor => a)
             }
 
-            Instruction::CP(registet) => {
+            Instruction::CP(register) => {
                 arithmetic_instruction!(register, self.compare)
             }
 
             Instruction::RETI => {
-                self.interupts_enabled = true;
+                self.interrupts_enabled = true;
                 (self.pop(),16)
             }
 
@@ -362,7 +364,6 @@ impl CPU {
                         LoadByteSource::L => self.registers.l,
                         LoadByteSource::D8 => self.read_next_byte(),
                         LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
-                        _ => {panic!("Other Sources Not Implemented!!!")}
                     };
                 
                     match target{
@@ -374,7 +375,7 @@ impl CPU {
                         LoadByteTarget::H => self.registers.h = source_val,
                         LoadByteTarget::L => self.registers.l = source_val,
                         LoadByteTarget::HLI => self.bus.write_byte(self.registers.get_hl(),source_val),
-                        _ => {panic!("Other Targets Not Implemented")}
+
                     };
 
                     match source{
@@ -481,7 +482,7 @@ impl CPU {
                     (self.pc.wrapping_add(3),20)
                 }
 
-                _ => {panic!("Other Load Types not Implemented Yet")}
+
                 }
             }
 
@@ -491,7 +492,7 @@ impl CPU {
                     StackTarget::BC => self.registers.get_bc(),
                     StackTarget::DE => self.registers.get_de(),
                     StackTarget::HL => self.registers.get_hl(),
-                    _ => {panic!("Other Targets not Supported Yet!!!")}
+
                 };
                 self.push(value);
                 (self.pc.wrapping_add(1), 16)
@@ -504,7 +505,7 @@ impl CPU {
                     StackTarget::BC => self.registers.set_bc(result),
                     StackTarget::DE => self.registers.set_de(result),
                     StackTarget::HL => self.registers.set_hl(result),
-                    _ => {panic!("Yet to Add Support for more Instruction in StackTarget")},
+
                 };
                 (self.pc.wrapping_add(1), 12)
             }
@@ -512,7 +513,7 @@ impl CPU {
             Instruction::CCF => {
                 self.registers.f.subtract = false;
                 self.registers.f.half_carry = false;
-                self.regsiters.f.carry = !self.registers.f.carry;
+                self.registers.f.carry = !self.registers.f.carry;
                 (self.pc.wrapping_add(1),4)
             }
 
@@ -539,7 +540,7 @@ impl CPU {
             }
 
             Instruction::RLCA =>{
-                manipulate_8bit_rehister!(self: a => rotate_left_retain_zero => a);
+                manipulate_8bit_register!(self: a => rotate_left_retain_zero => a);
                 (self.pc.wrapping_add(1),4)
             }
 
@@ -615,12 +616,12 @@ impl CPU {
                     JumpTest::NotCarry => !self.registers.f.carry,
                     JumpTest::Carry => self.registers.f.carry,
                     JumpTest::Always => true,
-                    _=>{panic!("Yet to add more Conditions")}
+
                 };
                 
                 let next_pc = self.return_(jump_condition);
 
-                let cycles = if jump_condition && function == JumpTarget::Always{
+                let cycles = if jump_condition && function == JumpTest::Always{
                     16
                 } else if jump_condition {
                     20
@@ -640,18 +641,13 @@ impl CPU {
             }
 
             Instruction::DI => {
-                self.interupts_enabled = false;
+                self.interrupts_enabled = false;
                 (self.pc.wrapping_add(1),4)
             }
 
             Instruction::EI => {
-                self.interupts_enabled = true;
+                self.interrupts_enabled = true;
                 (self.pc.wrapping_add(1),4)
-            }
-
-            Instruction::RST(loc) => {
-                self.rst();
-                (loc.to_hex(),24)
             }
 
             _ => {panic!("Support for more Instructions not Added Yet.")}
@@ -761,7 +757,6 @@ impl CPU {
         result
     }
 
-
     #[inline(always)]
     fn sub_without_carry(&mut self,value: u8) -> u8{
         self.sub(value,false)
@@ -779,7 +774,7 @@ impl CPU {
         } else {
             0
         };
-        let (sub,carry) = self.registers.a.overflowing_sub(value);
+        let (_sub,carry) = self.registers.a.overflowing_sub(value);
         let (sub2,carry2) = self.registers.a.overflowing_sub(additional_carry);
 
         self.registers.f.zero = sub2 == 0;
@@ -868,9 +863,9 @@ impl CPU {
     #[inline(always)]
     fn rotate_right(&mut self,value: u8, set_zero: bool) -> u8{
         let new_value = value.rotate_right(1);
-        self.registers.f.zero = set_zeto && new_value == 0;
+        self.registers.f.zero = set_zero && new_value == 0;
         self.registers.f.subtract = false;
-        self.registers.f.half_carty = false;
+        self.registers.f.half_carry = false;
         self.registers.f.carry = value & 0b1 == 0b1;
 
         new_value
@@ -905,7 +900,7 @@ impl CPU {
         let new_value = ((value & 0xf) << 4) | ((value & 0xf0) >> 4); 
         self.registers.f.zero = new_value == 0;
         self.registers.f.subtract = false;
-        self.registers.f.half_carty = false;
+        self.registers.f.half_carry = false;
         self.registers.f.carry = false;
 
         new_value
@@ -913,7 +908,7 @@ impl CPU {
 
     #[inline(always)]
     fn decimal_adjust(&mut self,value: u8) -> u8{
-        let flags = self.register.f;
+        let flags = self.registers.f;
         let mut carry = false;
 
         let result = if !flags.subtract{
@@ -958,7 +953,7 @@ impl CPU {
         let bit_position: u8 = bit_position.into();
         let result = (value >> bit_position) & 0b1;
         self.registers.f.zero = result == 0;
-        self.regsiters.f.subtract = false;
+        self.registers.f.subtract = false;
         self.registers.f.half_carry = true;
     }
 
@@ -1001,6 +996,12 @@ impl CPU {
         (msb << 8) | lsb
     }
 
+    fn interrupt(&mut self, location: u16){
+        self.interrupts_enabled = false;
+        self.push(self.pc);
+        self.pc = location;
+        self.bus.step(12);
+    }
 
     #[inline(always)]
     fn rst(&mut self){
@@ -1095,4 +1096,5 @@ impl CPU {
     fn read_next_byte(&self) -> u8{
         self.bus.read_byte(self.pc + 1) as u8
     }
+
 }

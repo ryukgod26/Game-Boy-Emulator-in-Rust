@@ -54,6 +54,7 @@ pub enum ArithmeticTarget{
     A,B,C,D,E,H,L,HLI,D8,
 }
 
+#[derive(Clone, Copy,Debug,PartialEq)]
 pub enum JumpTest{
     NotZero,
     Zero,
@@ -110,13 +111,13 @@ pub enum StackTarget{
     AF,DE,BC,HL
 }
 
-pub enum JumpTarget{
-    NotZero,
-    Zero,
-    NotCarry,
-    Carry,
-    Always
-}
+// pub enum JumpTarget{
+//     NotZero,
+//     Zero,
+//     NotCarry,
+//     Carry,
+//     Always
+// }
 
 #[derive(Copy,Clone,Debug,PartialEq)]
 pub enum BitPosition{
