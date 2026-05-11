@@ -118,18 +118,7 @@ impl MemoryBus{
             joypad: Joypad::new(),
         }
     }
-
-    pub fn read_byte(&self,address: u16) ->u8{
-        //self.memory[address as usize]
-        let address = address as usize;
-        match address{
-            VRAM_BEGIN...VRAM_END{
-                self.gpu.read_vram(address - VRAM_BEGIN)
-            }
-            _ => panic!("Yet to add Support for other areas of memory.")
-        }
-    }
-
+    
     pub fn write_byte(&self, address: u16, value: u8) {
         let address = address as usize;
         match address{
@@ -138,6 +127,65 @@ impl MemoryBus{
             }
             _ => panic!("Yet to add Support for other areas of memory.")
         }
+    }
+
+    pub fn step(&mut self, cycles: u8){
+        if self.timer.step(cycles){
+            self.interrupt_flag.timer = true;
+        }
+        self.divider.step(cycles);
+
+        let(vblank, lcd) = match self.gpu.step(cycles) {
+            InterruptRequest::None => (false,false),
+            InterruptRequest::VBlank => (true,false),
+            InterruptRequest::LCDStat => (false,true),
+            InterruptRequest::Both => (true,true)
+        };
+
+        if vblank{
+            self.interrupt_flag.vblank = true;
+        }
+        if lcd{
+            self.interrupt_flag.lcdstat = true;
+        }
+    }
+
+    pub fn read_byte(&self, address: u16) -> u8{
+        let address = address as usize;
+        match address {
+            BOOT_ROM_START..BOOT_ROM_END => {
+                if let Some(boot_rom) = self.boot_rom{
+                    boot_rom[address]
+                } else {
+                    self.rom_bank_0[address]
+                }
+            }
+            ROM_BANK_0_START..ROM_BANK_0_END => self.rom_bank_0[address],
+            ROM_BANK_N_START..ROM_BANK_N_END => self.rom_bank_n[address - ROM_BANK_N_START],
+            VRAM_BEGIN..VRAM_END => self.gpu.vram[address - VRAM_BEGIN],
+            EXTERNAL_RAM_START..EXTERNAL_RAM_END => self.external_ram[address - EXTERNAL_RAM_START],
+            WORKING_RAM_START..WORKING_RAM_END => self.working_ram[address - WORKING_RAM_START],
+            ECHO_RAM_START..ECHO_RAM_END => self.working_ram[address - ECHO_RAM_START],
+            OAM_START..OAM_END => self.gpu.oam[address - OAM_START],
+            IO_REGISTERS_START..IO_REGISTERS_END => self.read_io_register(address),
+            UNUSED_START..UNUSED_END => 0,
+            ZERO_PAGE_START..ZERO_PAGE_END => self.zero_page[address - ZERO_PAGE_START],
+            INTERRUPT_ENABLE_REGISTER => self.interrupt_enable.to_byte(),
+            _ => {
+                panic!(
+                    "Reading from an unkown part of memory at address 0x{:x}",
+                    address
+                );
+            }
+        }
+    }
+
+    pub fn has_interrupt(&self) -> bool {
+        (self.interrupt_enable.vblank && self.interrupt_flag.vblank)  ||
+        (self.interrupt_enable.lcdstat && self.interrupt_flag.lcdstat) ||
+        (self.interrupt_enable.joypad && self.interrupt_flag.joypad) ||
+        (self.interrupt_enable.timer && self.interrupt_flag.timer) ||
+        (self.interrupt_enable.serial && self.interrupt_flag.serial)
     }
 
     fn read_io_register(&self, address: usize) -> u8 {
@@ -330,4 +378,12 @@ impl MemoryBus{
         }
     }
     
+    pub fn slice(&self, start: u16, end: u16) -> Vec<u8>{
+        let mut result = Vec::with_capacity((end - start) as usize);
+        for i in start..end{
+            result.push(self.read_byte(i));
+        }
+        result
+    }
+
 }
