@@ -30,7 +30,17 @@ const NUMBER_OF_PIXELS: usize = 23040;
 
 
 fn main() {
-    println!("Hello, world!");
+    let matches = App::new("Gameboy Emulator")
+    .arg(Arg::with_name("boot_rom").short("b").value_name("FILE"))
+    .arg(Arg::with_name("rom").short("r").required(true).value_name("FILE")).get_matches();
+
+    let boot_buffer = matches.value_of("boot_rom").map(|path| buffer_from_file(path));
+    let game_buffer = matches.value_of("rom").map(|path| buffer_from_file(path)).unwrap();
+
+    let cpu = CPU::new(boot_buffer, game_buffer);
+    let window = Window::new("Gameboy Emulator", WINDOW_DIMENSIONS[0], WINDOW_DIMENSIONS[1], WindowOptions::default()).unwrap();
+
+    run(cpu, window);
 }
 
 fn run(mut cpu: CPU, mut window: Window){
