@@ -1,7 +1,5 @@
 use crate::{
-    Instruction, JumpTest, ArithmeticTarget, Registers, StackTarget,
-    LoadByteTarget, LoadType, LoadByteSource, IncDecTarget, LoadWordTarget,
-    Indirect, BitPosition, ADDHLTarget, PrefixTarget
+    ADDHLTarget, ArithmeticTarget, BitPosition, IncDecTarget, Indirect, Instruction, JumpTest, LoadByteSource, LoadByteTarget, LoadType, LoadWordTarget, PrefixTarget, Registers, StackTarget
 };
 
 use crate::memory_bus::{TIMER_VECTOR,VBLANK_VECTOR,LCDSTAT_VECTOR,MemoryBus};
@@ -55,6 +53,7 @@ macro_rules! manipulate_16bit_register{
             let val = $self.registers.$get_func();
             let result = $self.$func(val);
             $self.registers.$set_func(result);
+           // $self.pc.wrapping_add(1)
         }
     };
 }
@@ -254,6 +253,43 @@ impl CPU {
                     IncDecTarget::HLI => 12,
                     _ => 4,
                 };
+                (self.pc.wrapping_add(1),cycles)
+            }
+
+            Instruction::SUB(register) => {
+                arithmetic_instruction!(register, self.sub_without_carry => a)
+            }
+
+            Instruction::DEC(target) => {
+                match target{
+                    IncDecTarget::A => { manipulate_8bit_register!(self: a => dec_8bit => a); },
+                    IncDecTarget::B => { manipulate_8bit_register!(self: b => dec_8bit => b); },
+                    IncDecTarget::C => { manipulate_8bit_register!(self: c => dec_8bit => c); },
+                    IncDecTarget::D => { manipulate_8bit_register!(self: d => dec_8bit => d); },
+                    IncDecTarget::E => { manipulate_8bit_register!(self: e => dec_8bit => e); },
+                    IncDecTarget::H => { manipulate_8bit_register!(self: h => dec_8bit => h); },
+                    IncDecTarget::L => { manipulate_8bit_register!(self: l => dec_8bit => l); },
+                    IncDecTarget::BC => { manipulate_16bit_register!(self: get_bc => dec_16bit => set_bc); },
+                    IncDecTarget::HL => { manipulate_16bit_register!(self: get_hl => dec_16bit => set_hl); },
+                    IncDecTarget::DE => { manipulate_16bit_register!(self: get_de => dec_16bit => set_de); },
+                    IncDecTarget::SP => {
+                        let amt = self.sp;
+                        let res = self.dec_16bit(amt);
+                        self.sp = res;
+                    }
+                    IncDecTarget::HLI => {
+                        let hl = self.registers.get_hl();
+                        let amount = self.bus.read_byte(hl);
+                        let result = self.dec_8bit(amount);
+                        self.bus.write_byte(hl, result);
+                    }
+                };
+                let cycles = match target{
+                    IncDecTarget::BC | IncDecTarget::DE | IncDecTarget::SP | IncDecTarget::HL => 8,
+                    IncDecTarget::HLI => 12,
+                    _ => 4
+                };
+
                 (self.pc.wrapping_add(1),cycles)
             }
 
@@ -640,6 +676,11 @@ impl CPU {
                 (self.pc.wrapping_add(1),4)
             }
 
+            Instruction::HALT => {
+                self.is_halted = true;
+                (self.pc.wrapping_add(1),4)
+            }
+
             Instruction::DI => {
                 self.interrupts_enabled = false;
                 (self.pc.wrapping_add(1),4)
@@ -650,7 +691,7 @@ impl CPU {
                 (self.pc.wrapping_add(1),4)
             }
 
-            _ => {panic!("Support for more Instructions not Added Yet.")}
+            // _ => {panic!("Support for more Instructions not Added Yet.")}
         }
     }
 
@@ -662,6 +703,20 @@ impl CPU {
         self.registers.f.carry = false;
         self.registers.f.half_carry = false;
         new_value
+    }
+
+    #[inline(always)]
+    fn dec_8bit(&mut self,value: u8) -> u8{
+        let new_val = value.wrapping_sub(1);
+        self.registers.f.zero = new_val == 0;
+        self.registers.f.subtract = true;
+        self.registers.f.half_carry = value & 0xF == 0x0;
+        new_val
+    }
+
+    #[inline(always)]
+    fn dec_16bit(&mut self, value: u16) -> u16{
+        value.wrapping_sub(1)
     }
 
     #[inline(always)]

@@ -46,7 +46,7 @@ impl Registers{
     }
 
     pub fn get_hl(&self) -> u16{
-        (self.h as u16) << 8 | (self.l as u16)
+        (self.h as u16) << 8 | self.l as u16
     }
 
     pub fn set_hl(&mut self, value: u16){

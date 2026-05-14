@@ -123,23 +123,23 @@ impl MemoryBus{
             ROM_BANK_0_START..ROM_BANK_0_END => {
                 self.rom_bank_0[address] = value;
             }
-                VRAM_BEGIN..VRAM_END => {
+                VRAM_BEGIN..=VRAM_END => {
                     self.gpu.write_vram(address - VRAM_BEGIN, value);
                 }
-                EXTERNAL_RAM_START..EXTERNAL_RAM_END => {
+                EXTERNAL_RAM_START..=EXTERNAL_RAM_END => {
                     self.external_ram[address - EXTERNAL_RAM_START] = value;
                 }
-                WORKING_RAM_START..WORKING_RAM_END => {
+                WORKING_RAM_START..=WORKING_RAM_END => {
                     self.working_ram[address - WORKING_RAM_START] = value;
                 }
-                OAM_START..OAM_END => {
+                OAM_START..=OAM_END => {
                     self.gpu.write_oam(address - OAM_START, value);
                 }
-                IO_REGISTERS_START..IO_REGISTERS_END => {
+                IO_REGISTERS_START..=IO_REGISTERS_END => {
                     self.write_io_register(address, value);
                 }
-                UNUSED_START..UNUSED_END => { /* Does nothing */ }
-                ZERO_PAGE_START..ZERO_PAGE_END => {
+                UNUSED_START..=UNUSED_END => { /* Does nothing */ }
+                ZERO_PAGE_START..=ZERO_PAGE_END => {
                     self.zero_page[address - ZERO_PAGE_START] = value;
                 }
                 INTERRUPT_ENABLE_REGISTER => {

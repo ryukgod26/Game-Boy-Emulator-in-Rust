@@ -183,14 +183,7 @@ impl Instruction{
         }
     }
 
-    fn from_prefixed_byte(byte: u8)->Option<Instruction>{
-        match byte{
-            0x00 => Some(Instruction::RLC(PrefixTarget::B)),
-            _ => None,
-        }
-    }
-
-     fn from_byte_prefixed(byte: u8) -> Option<Instruction> {
+     fn from_prefixed_byte(byte: u8) -> Option<Instruction> {
         match byte {
             0x00 => Some(Instruction::RLC(PrefixTarget::B)),
             0x01 => Some(Instruction::RLC(PrefixTarget::C)),
