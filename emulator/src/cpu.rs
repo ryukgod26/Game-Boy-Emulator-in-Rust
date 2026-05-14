@@ -1008,7 +1008,7 @@ impl CPU {
         self.push(self.pc.wrapping_add(1));
     }
 
-    fn step(&mut self) -> u8{
+    pub fn step(&mut self) -> u8{
          let mut instruction_byte = self.bus.read_byte(self.pc);
 
         let prefixed = instruction_byte == 0xCB;

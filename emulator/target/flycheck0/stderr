@@ -1,12 +1,60 @@
-   0.030826200s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: stale: changed "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs"
-   0.030858600s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:           (vs) "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\target\\debug\\.fingerprint\\emulator-71a1b900ca19e9ec\\dep-bin-emulator"
-   0.030881000s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 13423164133, nanos: 258950100 } < FileTime { seconds: 13423164153, nanos: 599612500 }
-   0.031159600s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: false }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
-   0.031183400s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\target\\debug\\.fingerprint\\emulator-71a1b900ca19e9ec\\dep-bin-emulator", reference_mtime: FileTime { seconds: 13423164133, nanos: 258950100 }, stale: "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", stale_mtime: FileTime { seconds: 13423164153, nanos: 599612500 } }))
-   0.032284500s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: stale: changed "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs"
-   0.032298000s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:           (vs) "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\target\\debug\\.fingerprint\\emulator-861ede8be8052b3b\\dep-test-bin-emulator"
-   0.032303300s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:                FileTime { seconds: 13423164133, nanos: 258950100 } < FileTime { seconds: 13423164153, nanos: 599612500 }
-   0.032567800s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint dirty for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: true }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
-   0.032587100s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     dirty: FsStatusOutdated(StaleItem(ChangedFile { reference: "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\target\\debug\\.fingerprint\\emulator-861ede8be8052b3b\\dep-test-bin-emulator", reference_mtime: FileTime { seconds: 13423164133, nanos: 258950100 }, stale: "D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", stale_mtime: FileTime { seconds: 13423164153, nanos: 599612500 } }))
+   0.101242600s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint error for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: false }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
+   0.101286400s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator\target\debug\.fingerprint\emulator-eadd23280606d01e\bin-emulator`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
+   0.113167500s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint: fingerprint error for emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)/Check { test: true }/TargetInner { name: "emulator", doc: true, ..: with_path("D:\\GameBoy_Emulator_in_rust\\Game-Boy-Emulator-in-Rust\\emulator\\src\\main.rs", Edition2024) }
+   0.113192500s  INFO prepare_target{force=false package_id=emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator) target="emulator"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator\target\debug\.fingerprint\emulator-0f219708f9ab9a1f\test-bin-emulator`
+
+Caused by:
+    The system cannot find the file specified. (os error 2)
+
+Stack backtrace:
+   0: git_midx_writer_dump
+   1: git_midx_writer_dump
+   2: git_midx_writer_dump
+   3: git_midx_writer_dump
+   4: git_filter_source_repo
+   5: git_filter_source_path
+   6: git_filter_source_path
+   7: git_filter_source_path
+   8: git_filter_source_path
+   9: git_filter_source_repo
+  10: git_filter_source_repo
+  11: git_filter_source_repo
+  12: git_filter_source_repo
+  13: git_filter_source_repo
+  14: <unknown>
+  15: <unknown>
+  16: git_midx_writer_dump
+  17: git_filter_source_repo
+  18: git_midx_writer_dump
+  19: BaseThreadInitThunk
+  20: RtlUserThreadStart
     Checking emulator v0.1.0 (D:\GameBoy_Emulator_in_rust\Game-Boy-Emulator-in-Rust\emulator)
-    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.27s
+error: could not compile `emulator` (bin "emulator" test) due to 2 previous errors; 21 warnings emitted
+warning: build failed, waiting for other jobs to finish...
+error: could not compile `emulator` (bin "emulator") due to 2 previous errors; 21 warnings emitted
