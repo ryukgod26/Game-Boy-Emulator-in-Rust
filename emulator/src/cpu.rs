@@ -401,7 +401,7 @@ impl CPU {
                         LoadByteSource::D8 => self.read_next_byte(),
                         LoadByteSource::HLI => self.bus.read_byte(self.registers.get_hl()),
                     };
-                
+                 
                     match target{
                         LoadByteTarget::A => self.registers.a = source_val,
                         LoadByteTarget::B => self.registers.b = source_val,
@@ -685,6 +685,16 @@ impl CPU {
                 self.interrupts_enabled = true;
                 (self.pc.wrapping_add(1),4)
             }
+
+            // Instruction::HEXCA => {
+            //     let addr = self.bus.read_byte(self.pc + 1) as u16;
+            //     if self.registers.f.zero{
+            //         self.pc = addr;
+            //         (self.pc.wrapping_add(0),16)
+            //     }else {
+            //         (self.pc.wrapping_add(3),12)
+            //     }
+            // }
 
             // _ => {panic!("Support for more Instructions not Added Yet.")}
         }

@@ -1,4 +1,5 @@
 pub enum Instruction{
+    // HEXCA,
     ADD(ArithmeticTarget),
     SUB(ArithmeticTarget),
     JP(JumpTest),
@@ -995,6 +996,8 @@ impl Instruction{
             0x76 => Some(Instruction::HALT),
             0xf3 => Some(Instruction::DI),
             0xfb => Some(Instruction::EI),
+
+            // 0xca => Some(Instruction::HEXCA),
 
             _ => None,
         }
