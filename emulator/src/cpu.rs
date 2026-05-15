@@ -784,12 +784,6 @@ impl CPU {
     }
 
     #[inline(always)]
-    fn set_bit(&mut self, value: u8, bit_position: BitPosition) -> u8{
-        let bit_position: u8 = bit_position.into();
-        value | (1 << bit_position)
-    }
-
-    #[inline(always)]
     fn shift_right_logical(&mut self, value: u8) -> u8{
         let new_value = value >> 1;
         self.registers.f.zero = new_value == 0;
@@ -1019,7 +1013,7 @@ impl CPU {
     }
 
     #[inline(always)]
-    fn sey_bit(&mut self, value: u8, bit_position: BitPosition) -> u8{
+    fn set_bit(&mut self, value: u8, bit_position: BitPosition) -> u8{
         let bit_position: u8 = bit_position.into();
         value | (1 << bit_position)
     }
@@ -1137,7 +1131,7 @@ impl CPU {
         let next_step = self.pc.wrapping_add(2);
         if should_jump {
             let offset = self.read_next_byte() as i8;
-            let pc = next_step.wrapping_add(offset.abs() as u16);
+            let pc = next_step.wrapping_add(offset as i16 as u16);
             (pc,16)
             }else{
                 (next_step,12)

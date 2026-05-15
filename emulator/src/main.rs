@@ -35,7 +35,7 @@ fn main() {
     .arg(Arg::with_name("rom").short("r").required(true).value_name("FILE")).get_matches();
 
     let boot_buffer = matches.value_of("boot_rom").map(|path| buffer_from_file(path));
-    let game_buffer = matches.value_of("rom").map(|path| buffer_from_file(path)).unwrap();
+    let game_buffer = matches.value_of("rom").map(|path: &str| buffer_from_file(path)).unwrap();
 
     let cpu = CPU::new(boot_buffer, game_buffer);
     let window = Window::new("Gameboy Emulator", WINDOW_DIMENSIONS[0], WINDOW_DIMENSIONS[1], WindowOptions::default()).unwrap();
@@ -58,7 +58,7 @@ fn run(mut cpu: CPU, mut window: Window){
         while cycles_elapsed <= cycles_to_run as usize{
             cycles_elapsed += cpu.step() as usize;
         }
-        cycles_elapsed += cycles_elapsed;
+        cycles_elapsed_in_frame += cycles_elapsed;
 
         if cycles_elapsed_in_frame >= ONE_FRAME_IN_CYCLES{
             for(i,pixel) in cpu.bus.gpu.canvas_buffer.chunks(4).enumerate(){
@@ -67,7 +67,7 @@ fn run(mut cpu: CPU, mut window: Window){
                 | (pixel[1] as u32) << 8
                 | (pixel[0] as u32)
             }
-            window.update_with_buffer(&buffer).unwrap( );
+            window.update_with_buffer(&buffer).unwrap();
             cycles_elapsed_in_frame = 0;
         } else {
             sleep(Duration::from_nanos(2));

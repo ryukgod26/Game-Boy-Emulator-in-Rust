@@ -120,7 +120,7 @@ impl MemoryBus{
     pub fn write_byte(&mut self, address: u16, value: u8) {
         let address = address as usize;
         match address {
-            ROM_BANK_0_START..ROM_BANK_0_END => {
+            ROM_BANK_0_START..=ROM_BANK_0_END => {
                 self.rom_bank_0[address] = value;
             }
                 VRAM_BEGIN..=VRAM_END => {
@@ -178,23 +178,23 @@ impl MemoryBus{
     pub fn read_byte(&self, address: u16) -> u8{
         let address = address as usize;
         match address {
-            BOOT_ROM_START..BOOT_ROM_END => {
+            BOOT_ROM_START..=BOOT_ROM_END => {
                 if let Some(boot_rom) = self.boot_rom{
                     boot_rom[address]
                 } else {
                     self.rom_bank_0[address]
                 }
             }
-            ROM_BANK_0_START..ROM_BANK_0_END => self.rom_bank_0[address],
-            ROM_BANK_N_START..ROM_BANK_N_END => self.rom_bank_n[address - ROM_BANK_N_START],
-            VRAM_BEGIN..VRAM_END => self.gpu.vram[address - VRAM_BEGIN],
-            EXTERNAL_RAM_START..EXTERNAL_RAM_END => self.external_ram[address - EXTERNAL_RAM_START],
-            WORKING_RAM_START..WORKING_RAM_END => self.working_ram[address - WORKING_RAM_START],
-            ECHO_RAM_START..ECHO_RAM_END => self.working_ram[address - ECHO_RAM_START],
-            OAM_START..OAM_END => self.gpu.oam[address - OAM_START],
-            IO_REGISTERS_START..IO_REGISTERS_END => self.read_io_register(address),
-            UNUSED_START..UNUSED_END => 0,
-            ZERO_PAGE_START..ZERO_PAGE_END => self.zero_page[address - ZERO_PAGE_START],
+            ROM_BANK_0_START..=ROM_BANK_0_END => self.rom_bank_0[address],
+            ROM_BANK_N_START..=ROM_BANK_N_END => self.rom_bank_n[address - ROM_BANK_N_START],
+            VRAM_BEGIN..=VRAM_END => self.gpu.vram[address - VRAM_BEGIN],
+            EXTERNAL_RAM_START..=EXTERNAL_RAM_END => self.external_ram[address - EXTERNAL_RAM_START],
+            WORKING_RAM_START..=WORKING_RAM_END => self.working_ram[address - WORKING_RAM_START],
+            ECHO_RAM_START..=ECHO_RAM_END => self.working_ram[address - ECHO_RAM_START],
+            OAM_START..=OAM_END => self.gpu.oam[address - OAM_START],
+            IO_REGISTERS_START..=IO_REGISTERS_END => self.read_io_register(address),
+            UNUSED_START..=UNUSED_END => 0,
+            ZERO_PAGE_START..=ZERO_PAGE_END => self.zero_page[address - ZERO_PAGE_START],
             INTERRUPT_ENABLE_REGISTER => self.interrupt_enable.to_byte(),
             _ => {
                 panic!(

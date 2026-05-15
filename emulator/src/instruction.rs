@@ -477,6 +477,9 @@ impl Instruction{
 
     fn from_not_prefixed_byte(byte: u8) -> Option<Instruction> {
         match byte {
+            0xd3 | 0xdb | 0xdd | 0xe3 | 0xe4 | 0xeb | 0xec | 0xed | 0xf4 | 0xfc | 0xfd => {
+                Some(Instruction::NOP)
+            }
             0x3c => Some(Instruction::INC(IncDecTarget::A)),
             0x04 => Some(Instruction::INC(IncDecTarget::B)),
             0x14 => Some(Instruction::INC(IncDecTarget::D)),
