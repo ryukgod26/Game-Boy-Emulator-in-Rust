@@ -12,7 +12,6 @@ pub enum Instruction{
     RETI,
     RST(RSTLocation),
     NOP,
-    Halt,
     DI,
     EI,
     INC(IncDecTarget),

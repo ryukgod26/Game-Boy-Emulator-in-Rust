@@ -4,21 +4,27 @@ use crate::{
 
 use crate::memory_bus::{TIMER_VECTOR,VBLANK_VECTOR,LCDSTAT_VECTOR,MemoryBus};
 
-pub struct CPU{
-    pub registers: Registers,
-    pc: u16,
-    sp: u16,
-    pub bus: MemoryBus,
-    is_halted: bool,
-    interrupts_enabled: bool,
-}
 
-macro_rules! manipulate_8bit_register{
+macro_rules! manipulate_8bit_register {
 
     ($self: ident : $getter: ident => $func: ident) => {
         {
             let value = $self.registers.$getter;
             $self.$func(value)
+        }
+    };
+
+    ($self: ident : $getter: ident => $func: ident => $setter: ident) => {
+        {
+            let result = manipulate_8bit_register!($self: $getter => $func);
+            $self.registers.$setter = result;
+        }
+    };
+
+    ($self: ident : ($register: ident @ $bit_position: ident) => $func: ident) => {
+        {
+            let value = $self.registers.$register;
+            $self.$func(value, $bit_position)
         }
     };
 
@@ -28,23 +34,6 @@ macro_rules! manipulate_8bit_register{
             $self.registers.$setter = result;
         }
     };
-
-    ($self: ident : $reg: ident => $func: ident => $_flag_reg: ident) => {
-        {
-            let val = $self.registers.$reg;
-            let result = $self.$func(val);
-            $self.registers.$reg = result;
-            $self.pc.wrapping_add(1)
-        }
-    };
-
-    ($self: ident : ($register: ident @ $bit_position: ident) => $func: ident) =>{
-        {
-            let value = $self.registers.$register;
-            $self.$func(value,$bit_position)
-        }
-    }
-
 }
 
 macro_rules! manipulate_16bit_register{
@@ -192,6 +181,17 @@ macro_rules! prefix_instruction{
         }
     };
 }
+
+
+pub struct CPU{
+    pub registers: Registers,
+    pc: u16,
+    sp: u16,
+    pub bus: MemoryBus,
+    is_halted: bool,
+    interrupts_enabled: bool,
+}
+
 
 impl CPU {
     pub fn new(boot_rom: Option<Vec<u8>>,game_rom: Vec<u8>) -> Self{
@@ -377,7 +377,7 @@ impl CPU {
 
                 //Half and Carry are Computed at nibble and byte level instead of byte and word level
                 let half_carry_mask = 0xF;
-                self.registers.f.carry = (self.sp & half_carry_mask) + (value & half_carry_mask ) > half_carry_mask;
+                self.registers.f.half_carry = (self.sp & half_carry_mask) + (value & half_carry_mask ) > half_carry_mask;
                 let carry_mask = 0xff;
                 self.registers.f.carry = (self.sp & carry_mask) + (value & carry_mask) > carry_mask;
                 self.registers.f.zero = false;
@@ -501,7 +501,7 @@ impl CPU {
 
                 LoadType::HLFromSPN => {
                     let value = self.read_next_byte() as i8 as i16 as u16;
-                    let result = self.pc.wrapping_add(value);
+                    let result = self.sp.wrapping_add(value);
                     self.registers.set_hl(result);
                     self.registers.f.zero = false;
                     self.registers.f.subtract = false;
@@ -513,7 +513,7 @@ impl CPU {
                 LoadType::IndirectFromSP => {
                     let addr = self.read_next_word();
                     let sp = self.sp;
-                    self.bus.write_byte(addr, ((sp & 0xFF00) >> 8) as u8);
+                    self.bus.write_byte(addr, (sp & 0xFF) as u8);
                     self.bus.write_byte(addr.wrapping_add(1), ((sp & 0xFF00) >> 8) as u8);
                     (self.pc.wrapping_add(3),20)
                 }
@@ -671,11 +671,6 @@ impl CPU {
                 (self.pc.wrapping_add(1), 4)
             }
 
-            Instruction::Halt => {
-                self.is_halted = true;
-                (self.pc.wrapping_add(1),4)
-            }
-
             Instruction::HALT => {
                 self.is_halted = true;
                 (self.pc.wrapping_add(1),4)
@@ -739,14 +734,6 @@ impl CPU {
         new_value
     }
 
-    #[inline(always)]
-    fn compare(&mut self,value: u8){
-        self.registers.f.zero = self.registers.a == value;
-        self.registers.f.subtract = true;
-        self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF);
-        self.registers.f.carry = self.registers.a < value;
-    }
-
     fn call(&mut self,should_jump: bool) -> (u16,u8){
         let next_pc = self.pc.wrapping_add(3);
         if should_jump{
@@ -807,28 +794,18 @@ impl CPU {
     }
 
     #[inline(always)]
-    fn sub_without_carry(&mut self,value: u8) -> u8{
-        self.sub(value,false)
-    }
-
-    #[inline(always)]
-    fn sub_with_carry(&mut self,value: u8) -> u8{
-        self.sub(value, true)
-    }
-
-    #[inline(always)]
     fn sub(&mut self,value: u8, sub_carry: bool) -> u8{
         let additional_carry = if sub_carry && self.registers.f.carry{
             1
         } else {
             0
         };
-        let (_sub,carry) = self.registers.a.overflowing_sub(value);
-        let (sub2,carry2) = self.registers.a.overflowing_sub(additional_carry);
+        let (sub,carry) = self.registers.a.overflowing_sub(value);
+        let (sub2,carry2) = sub.overflowing_sub(additional_carry);
 
         self.registers.f.zero = sub2 == 0;
         self.registers.f.subtract = true;
-        self.registers.f.carry = carry | carry2;
+        self.registers.f.carry = carry ||  carry2;
         self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF) + additional_carry;
         sub2
     }
@@ -1144,6 +1121,24 @@ impl CPU {
 
     fn read_next_byte(&self) -> u8{
         self.bus.read_byte(self.pc + 1) as u8
+    }
+
+    #[inline(always)]
+    fn compare(&mut self,value: u8){
+        self.registers.f.zero = self.registers.a == value;
+        self.registers.f.subtract = true;
+        self.registers.f.half_carry = (self.registers.a & 0xF) < (value & 0xF);
+        self.registers.f.carry = self.registers.a < value;
+    }
+
+    #[inline(always)]
+    fn sub_without_carry(&mut self,value: u8) -> u8{
+        self.sub(value,false)
+    }
+
+    #[inline(always)]
+    fn sub_with_carry(&mut self,value: u8) -> u8{
+        self.sub(value, true)
     }
 
 }
