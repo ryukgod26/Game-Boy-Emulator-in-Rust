@@ -2,6 +2,10 @@
 
 This is a simple Game Boy emulator written in Rust. This repository contains an emulator implementation that simulates the Game Boy CPU, GPU, memory bus, input (joypad), timers, and basic instruction set. This works like an noemal Gameboy emulator. You can also use the boot rom file to get the official boot screen (I had to compile it from assembly and then had to convert it to 32kbs). You can use 2 files(boot rom is optional and game rom is mandatory) to run this project. Use the -b for boot romand -r for the game rom when running the program.
 
+## For Hackclub Reviewer
+I want to submit my time from 4 feburary 2026 to 21 feb 2026 to the ysws event Hack Club the Game.
+I want to submit my time from 21 feburary 2026 to now to the event Horizons.
+
 ## Features
 - CPU emulation (instruction fetching/decoding/execution)
 - Memory bus with cartridge ROM loading
