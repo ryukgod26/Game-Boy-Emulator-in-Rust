@@ -5,6 +5,8 @@ This is a simple Game Boy emulator written in Rust. This repository contains an 
 ## For Hackclub Reviewer
 I want to submit my time from 4 feburary 2026 to 21 feb 2026 to the ysws event Hack Club the Game. Time Spent: 17 hours 54 minutes
 I want to submit my time from 21 feburary 2026 to now to the event Horizons. Time Spent: 73 hours 50 minutes
+### AI USAGE
+I only used for Debugging during final testing and did not used it to generate code.
 
 ## Features
 - CPU emulation (instruction fetching/decoding/execution)
