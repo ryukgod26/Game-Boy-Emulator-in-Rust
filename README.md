@@ -45,4 +45,11 @@ emulator.exe -b dmg_boot_fixed.bin -r porklike.gb
 ```
 
 ## Usage
+
+Open this Folder in your terminal and then run this command
+```bash
+emulator.exe -b boot_rom.bin -r game.gb
+```
+
+### Controls
 - Controls: use your system keyboard (mapped in `joypad.rs`) to control the emulated Game Boy. Press `Esc` to exit the emulator window.
